@@ -1,0 +1,12 @@
+Flask
+netCDF4
+geojson
+boto3
+pygrib
+arm-pyart
+numpy
+scipy
+requests
+matplotlib
+cartopy
+plotly
