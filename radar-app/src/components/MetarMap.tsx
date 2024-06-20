@@ -3,6 +3,8 @@ import dynamic from 'next/dynamic';
 import { GeoJSONProps } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { LatLngExpression } from 'leaflet';
+import styles from '../styles/PrecipitationMap.module.css'; // Importing the CSS module for styling
+
 
 interface MetarMapProps {
   geojsonData: GeoJSONProps['data'];
@@ -64,17 +66,26 @@ const MetarMap: React.FC<MetarMapProps> = ({ geojsonData }) => {
   }
 
   return (
-    <MapContainer center={[51.505, -0.09]} zoom={4} style={{ height: '100vh', width: '100%' }}>
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      />
-      <GeoJSON
-        data={geojsonData}
-        onEachFeature={onEachFeature}
-        pointToLayer={pointToLayer}
-      />
-    </MapContainer>
+    <div className={styles.mapContainer}>
+      <MapContainer
+            center={[0, 0]}
+            zoom={3}
+            className={styles.map}
+            worldCopyJump={true}
+            maxBounds={[[85, -180], [-85, 180]]} // Set max bounds to prevent wrapping
+            maxBoundsViscosity={1.0} // Makes panning to edges smoother
+          >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
+        <GeoJSON
+          data={geojsonData}
+          onEachFeature={onEachFeature}
+          pointToLayer={pointToLayer}
+        />
+      </MapContainer>
+    </div>
   );
 };
 

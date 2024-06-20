@@ -6,6 +6,9 @@ import TemperatureMap from '@/components/TemperatureMap';
 import HumidityMap from '@/components/HumidityMap';
 import TotalPrecipitationMap from '@/components/TotalPrecipitationMap';
 import axios from 'axios';
+import styles from '../styles/Home.module.css'; // Importing the CSS module for styling
+
+
 import { FeatureCollection, Geometry, GeoJsonProperties } from 'geojson';
 
 const useData = (dataType: 'precipitation' | 'metar' | '') => {
@@ -76,25 +79,25 @@ const Home: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className={styles.button_container}>
       <div>
-        <button onClick={() => {
+        <button className={styles.button} onClick={() => {
           setMapType('totalPrecipitation')
           setDataType('')
           }}>Total Precipitation Map</button>
-        <button onClick={() => {
+        <button className={styles.button} onClick={() => {
           setMapType('temperature')
           setDataType('')
           }}>Temperature Map</button>
-        <button onClick={() => {
+        <button className={styles.button} onClick={() => {
           setMapType('humidity')
           setDataType('')
           }}>Humidity Map</button>
-        <button onClick={() => {
+        <button className={styles.button} onClick={() => {
           setMapType('metar')
           setDataType('metar')
           }}>METAR Wind Data</button>
-        <button onClick={() => {
+        <button className={styles.button} onClick={() => {
           setMapType('precipitation')
           setDataType('precipitation')
           }}>Precipitation Data</button>

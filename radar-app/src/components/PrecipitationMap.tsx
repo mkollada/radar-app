@@ -66,7 +66,7 @@ const PrecipitationMap: React.FC<MapProps> = ({ geojsonData, metarData, fileType
       {fileType === 'geojson' && geojsonData.length > 0 && (
         <MapContainer
           center={[0, 0]}
-          zoom={2}
+          zoom={3}
           className={styles.map}
           worldCopyJump={true}
           maxBounds={[[85, -180], [-85, 180]]} // Set max bounds to prevent wrapping
