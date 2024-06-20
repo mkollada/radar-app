@@ -15,7 +15,7 @@ def read_netcdf(netcdf_file, variable_name):
 
 def read_grib2(grib2_file, variable_name, type_of_level):
     print("Reading GRIB2 file...")
-    ds = xr.open_dataset(grib2_file, engine='cfgrib', filter_by_keys={'typeOfLevel': type_of_level})
+    ds = xr.open_dataset(grib2_file, engine='cfgrib', filter_by_keys={'typeOfLevel': type_of_level, 'stepType': 'instant'})
     data = ds[variable_name]
     if 'time' in data.dims:
         data = data.isel(time=0)
