@@ -22,7 +22,7 @@ def parse_goes_query_params(args):
 
     return start, end
 
-def move_files_to_directory(source_dir, key, dest_dir):
+def copy_files_to_directory(source_dir, key, dest_dir):
     source_dir = os.path.join(source_dir,key)
     dest_dir = os.path.join(dest_dir,key)
     if not os.path.exists(dest_dir):
@@ -32,7 +32,7 @@ def move_files_to_directory(source_dir, key, dest_dir):
         if not os.path.isfile(os.path.join(dest_dir, filename)):
             if os.path.isfile(full_file_name):
                 print('moving')
-                shutil.move(full_file_name, dest_dir)
+                shutil.copy(full_file_name, dest_dir)
             else:
                 print('skipping files')
         else:

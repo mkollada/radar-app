@@ -1,4 +1,3 @@
-# app.py
 from flask import Flask, jsonify, request
 import os
 import logging
@@ -10,12 +9,12 @@ from goes2go import GOES
 
 from data_sources.mrms_utils import fetch_and_download_mrms_data
 from data_sources.nexrad_utils import parse_nexrad_query_params, nexrad_to_geojson
-from data_sources.metar_utils import get_metar_data
-from data_sources.goes_utils import parse_goes_query_params, move_files_to_directory
+from data_sources.metar_utils import get_metar_data, metar_to_geojson
+from data_sources.goes_utils import parse_goes_query_params, copy_files_to_directory
 
 app = Flask(__name__)
 
-local_data_folder = './data'
+local_data_folder = '../data'
 mrms_data_folder = os.path.join(local_data_folder, 'mrms')
 nexrad_data_folder = os.path.join(local_data_folder, 'nexrad')
 goes_data_folder = os.path.join(local_data_folder, 'goes')
@@ -53,9 +52,9 @@ def get_goes_data():
         files = G.timerange(start, end)
         
         # Move downloaded files to the specified directory
-        move_files_to_directory(default_goes_download_folder,os.path.dirname(files.file[0]), goes_data_folder)
+        copy_files_to_directory(default_goes_download_folder, os.path.dirname(files.file[0]), goes_data_folder)
 
-        return jsonify({'message': 'Downloaded and moved files', 'files': [os.path.join(goes_data_folder,f) for f in files.file.values.tolist()]})
+        return jsonify({'message': 'Downloaded and moved files', 'files': [os.path.join(goes_data_folder, f) for f in files.file.values.tolist()]})
     except Exception as e:
         logging.error(f"Error: {e}")
         return jsonify({"error": str(e)}), 500
@@ -77,13 +76,13 @@ def get_nexrad_data():
         logging.error(f"Error: {e}")
         return jsonify({"error": str(e)}), 500
 
-## TODO - fix regex parsing or metar files
 @app.route('/metar', methods=['GET'])
 def get_metar_data_route():
     try:
-        max_files = int(request.args.get('max_files', 5))
-        df = get_metar_data(max_files=max_files)
-        return df.to_json(orient='records')
+        cycle = request.args.get('cycle', '00')
+        df = get_metar_data(cycle=cycle)
+        geojson = metar_to_geojson(df)
+        return jsonify(geojson)
     except Exception as e:
         logging.error(f"Error: {e}")
         return jsonify({"error": str(e)}), 500
@@ -98,7 +97,7 @@ def get_weather_alerts():
     except requests.exceptions.RequestException as e:
         logging.error(f"Error fetching weather alerts: {e}")
         return jsonify({"error": str(e)}), 500
-    
+
 @app.route('/nomads', methods=['GET'])
 def get_nomads_data():
     try:
@@ -109,7 +108,6 @@ def get_nomads_data():
     except requests.exceptions.RequestException as e:
         logging.error(f"Error fetching nomads: {e}")
         return jsonify({"error": str(e)}), 500
-
 
 if __name__ == '__main__':
     app.run(debug=True)
