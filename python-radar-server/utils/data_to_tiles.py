@@ -91,6 +91,17 @@ def generate_tiles(input_tif, output_tiles, profile='mercator'):
     except subprocess.CalledProcessError as e:
         print(f"Error during tile creation: {e}")
 
+def remove_intermediate_files(files):
+    print("Removing intermediate files...")
+    for file in files:
+        try:
+            os.remove(file)
+            print(f"Removed {file}")
+        except FileNotFoundError:
+            print(f"{file} not found, skipping.")
+        except Exception as e:
+            print(f"Error removing {file}: {e}")
+
 def process_netcdf_to_tiles(netcdf_file, variable_name, output_tif, output_8bit_tif, reprojected_tif, output_tiles, target_crs='EPSG:3857'):
     data = read_netcdf(netcdf_file, variable_name)
     data = clip_latitude(data)
@@ -98,6 +109,7 @@ def process_netcdf_to_tiles(netcdf_file, variable_name, output_tif, output_8bit_
     convert_to_8bit(output_tif, output_8bit_tif)
     reproject_geotiff(output_8bit_tif, reprojected_tif, target_crs)
     generate_tiles(reprojected_tif, output_tiles, profile='mercator')
+    remove_intermediate_files([output_tif, output_8bit_tif, reprojected_tif, 'temp.vrt'])
 
 def process_grib2_to_tiles(grib_file, variable_name, type_of_level, output_tif, output_8bit_tif, reprojected_tif, output_tiles, target_crs='EPSG:3857'):
     data = read_grib2(grib_file, variable_name, type_of_level)
@@ -106,5 +118,4 @@ def process_grib2_to_tiles(grib_file, variable_name, type_of_level, output_tif, 
     convert_to_8bit(output_tif, output_8bit_tif)
     reproject_geotiff(output_8bit_tif, reprojected_tif, target_crs)
     generate_tiles(reprojected_tif, output_tiles, profile='mercator')
-
-
+    remove_intermediate_files([output_tif, output_8bit_tif, reprojected_tif, 'temp.vrt'])
