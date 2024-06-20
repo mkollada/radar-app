@@ -1,0 +1,9 @@
+# Temperature (C)   Red     Green   Blue
+-30                0       0       255   # Blue for very cold
+-20                70      130     180   # Light blue
+-10                0       255     255   # Cyan
+0                  0       255     0     # Green for freezing point
+10                 255     255     0     # Yellow for mild temperature
+20                 255     165     0     # Orange for warm temperature
+30                 255     0       0     # Red for hot temperature
+40                 128     0       128   # Purple for very hot temperature

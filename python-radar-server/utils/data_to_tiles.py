@@ -102,20 +102,35 @@ def remove_intermediate_files(files):
         except Exception as e:
             print(f"Error removing {file}: {e}")
 
-def process_netcdf_to_tiles(netcdf_file, variable_name, output_tif, output_8bit_tif, reprojected_tif, output_tiles, target_crs='EPSG:3857'):
+def apply_color_relief(input_tif, color_relief_file, output_colored_tif):
+    print("Applying color relief...")
+    gdal_dem_command = [
+        'gdaldem', 'color-relief', input_tif, color_relief_file, output_colored_tif
+    ]
+
+    try:
+        subprocess.run(gdal_dem_command, check=True)
+        print(f"Color relief applied successfully to {output_colored_tif}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error during color relief application: {e}")
+
+def process_netcdf_to_tiles(netcdf_file, variable_name, output_tif, output_8bit_tif, reprojected_tif, output_colored_tif, output_tiles, color_relief_file, target_crs='EPSG:3857'):
     data = read_netcdf(netcdf_file, variable_name)
     data = clip_latitude(data)
     convert_to_geotiff(data, output_tif)
-    convert_to_8bit(output_tif, output_8bit_tif)
+    apply_color_relief(output_tif, color_relief_file, output_colored_tif)
+    convert_to_8bit(output_colored_tif, output_8bit_tif)
     reproject_geotiff(output_8bit_tif, reprojected_tif, target_crs)
     generate_tiles(reprojected_tif, output_tiles, profile='mercator')
-    remove_intermediate_files([output_tif, output_8bit_tif, reprojected_tif, 'temp.vrt'])
+    remove_intermediate_files([output_tif, output_8bit_tif, reprojected_tif, output_colored_tif, 'temp.vrt'])
 
-def process_grib2_to_tiles(grib_file, variable_name, type_of_level, output_tif, output_8bit_tif, reprojected_tif, output_tiles, target_crs='EPSG:3857'):
+def process_grib2_to_tiles(grib_file, variable_name, type_of_level, output_tif, output_8bit_tif, reprojected_tif, output_colored_tif, output_tiles, color_relief_file, target_crs='EPSG:3857'):
     data = read_grib2(grib_file, variable_name, type_of_level)
     data = clip_latitude(data)
     convert_to_geotiff(data, output_tif)
-    convert_to_8bit(output_tif, output_8bit_tif)
+    apply_color_relief(output_tif, color_relief_file, output_colored_tif)
+    convert_to_8bit(output_colored_tif, output_8bit_tif)
     reproject_geotiff(output_8bit_tif, reprojected_tif, target_crs)
     generate_tiles(reprojected_tif, output_tiles, profile='mercator')
-    remove_intermediate_files([output_tif, output_8bit_tif, reprojected_tif, 'temp.vrt'])
+    remove_intermediate_files([output_tif, output_8bit_tif, reprojected_tif, output_colored_tif, 'temp.vrt'])
+
