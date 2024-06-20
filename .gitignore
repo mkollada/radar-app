@@ -187,3 +187,9 @@ yarn-error.log*
 
 # ESLint configuration
 .eslintrc.json
+
+# Data Files
+python-radar-server/output_tiles/
+python-radar-server/data/
+analysis/
+data/
