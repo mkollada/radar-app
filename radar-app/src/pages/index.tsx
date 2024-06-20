@@ -2,14 +2,12 @@
 import { useEffect, useState } from 'react';
 import PrecipitationMap from '@/components/PrecipitationMap';
 import MetarMap from '@/components/MetarMap';
-import TemperatureMap from '@/components/TemperatureMap';
-import HumidityMap from '@/components/HumidityMap';
-import TotalPrecipitationMap from '@/components/TotalPrecipitationMap';
 import axios from 'axios';
 import styles from '../styles/Home.module.css'; // Importing the CSS module for styling
 
 
 import { FeatureCollection, Geometry, GeoJsonProperties } from 'geojson';
+import TileMap from '@/components/TileMap';
 
 const useData = (dataType: 'precipitation' | 'metar' | '') => {
   const [precipGeojsonData, setPrecipGeojsonData] = useState<FeatureCollection<Geometry, GeoJsonProperties>[]>([]);
@@ -64,11 +62,11 @@ const Home: React.FC = () => {
   const renderMap = () => {
     switch (mapType) {
       case 'totalPrecipitation':
-        return <TotalPrecipitationMap />;
+        return <TileMap directory='total_precipitation' />
       case 'temperature':
-        return <TemperatureMap />;
+        return <TileMap directory='temperature' />
       case 'humidity':
-        return <HumidityMap />;
+        return <TileMap directory='humidity' />;
       case 'metar':
         return metarGeojsonData.length ? <MetarMap geojsonData={metarGeojsonData[0]} /> : <div>No METAR data available</div>;
       case 'precipitation':
