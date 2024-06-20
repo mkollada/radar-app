@@ -193,3 +193,4 @@ python-radar-server/output_tiles/
 python-radar-server/data/
 analysis/
 data/
+radar-app/public/tiles/
