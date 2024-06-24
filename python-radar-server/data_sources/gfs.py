@@ -8,13 +8,17 @@ from utils.data_to_tiles import process_grib2_to_tiles
 
 class GFSDataSource(DataSource):
     def __init__(self, raw_data_folder='./data/gfs/raw', 
-                 processed_data_folder='./data/gfs/processed'):
+                 processed_data_folder='./data/gfs/processed',
+                 variable_names=['prate'],
+                 type_of_level='surface',
+                 color_relief_file='./assets/color_reliefs/precipitation_color_relief.txt'):
         super().__init__(raw_data_folder, processed_data_folder)
         self.hour_dir_names = ['00/', '06/', '12/', '18/']
 
         self.variable_names = ['refc']
         self.downloaded_files = []
-        self.type_of_level = 'atmosphere'
+        self.type_of_level = type_of_level
+        self.color_relief_file = color_relief_file
 
         self.date = None
         self.hour = None
@@ -72,7 +76,7 @@ class GFSDataSource(DataSource):
 
     def check_files_exist(self, folder_url):
         hour = folder_url.split('/')[-2]
-        files_to_check = [f"{folder_url}/atmos/gfs.t{hour}z.pgrb2.0p25.f{str(i).zfill(3)}" for i in range(0, 13)]
+        files_to_check = [os.path.join(folder_url, f"atmos/gfs.t{hour}z.sfcf{str(i).zfill(3)}.nc") for i in range(0, 13)]
         
         for file_url in files_to_check:
             print('Checking...')
@@ -117,8 +121,8 @@ class GFSDataSource(DataSource):
                     base_temp_file_name + '_8bit.tif',
                     base_temp_file_name + '_3857.tif',
                     base_temp_file_name + '_colored.tif',
-                    os.path.join(self.processed_data_folder,self.date,self.hour,grib2_file),
-                    './assets/color_reliefs/temp_color_relief.txt',
+                    os.path.join(self.processed_data_folder,self.date,self.hour,grib2_file.split('/')[-1]),
+                    './assets/color_reliefs/prate_color_relief.txt',
                     target_crs='EPSG:3857'
                 )
 
