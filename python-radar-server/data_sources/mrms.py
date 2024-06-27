@@ -40,8 +40,12 @@ class MRMSDataSource(DataSource):
         processed_files = {}
         for data_type in self.data_types:
             processed_dir = os.path.join(self.processed_data_folder, data_type.name)
-            raw_dir_files = [os.path.join(processed_dir, dirname) for dirname in os.listdir(processed_dir) if dirname.endswith('grib2')]
-            processed_files[data_type.name] = raw_dir_files
+            if os.path.exists(processed_dir):
+                raw_dir_files = [os.path.join(processed_dir, dirname) for dirname in os.listdir(processed_dir) if dirname.endswith('grib2')]
+                processed_files[data_type.name] = raw_dir_files
+            else:
+                os.makedirs(processed_dir)
+                processed_files[data_type.name] = []
 
         return processed_files
 
@@ -168,7 +172,8 @@ class MRMSDataSource(DataSource):
             filter_grib=False
         )
 
-        self.processed_files[data_type.name].append(output_dir)
+        if output_dir not in self.processed_files[data_type.name]:
+            self.processed_files[data_type.name].append(output_dir)
 
     def download_data(self):
         for data_type in self.data_types:
