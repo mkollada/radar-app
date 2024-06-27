@@ -126,7 +126,21 @@ def apply_color_relief(input_tif, color_relief_file, output_colored_tif):
     except subprocess.CalledProcessError as e:
         print(f"Error during color relief application: {e}")
 
-def process_netcdf_to_tiles(netcdf_file, variable_name, output_tif, output_8bit_tif, reprojected_tif, output_colored_tif, output_tiles, color_relief_file, target_crs='EPSG:3857'):
+def process_netcdf_to_tiles(
+        netcdf_file, 
+        variable_name, 
+        output_tiles, 
+        color_relief_file, 
+        target_crs='EPSG:3857'
+):
+    
+    base_temp_file_name = os.path.splitext(os.path.basename(netcdf_file))[0]
+    output_tif = base_temp_file_name + '.tif'
+    output_8bit_tif = base_temp_file_name + '_8bit.tif'
+    output_colored_tif = base_temp_file_name + '_3857.tif'
+    reprojected_tif = base_temp_file_name + '_colored.tif'
+    
+    
     data = read_netcdf(netcdf_file, variable_name)
     data = clip_latitude(data)
     convert_to_geotiff(data, output_tif)
@@ -140,15 +154,22 @@ def process_grib2_to_tiles(
         grib_file, 
         variable_name, 
         type_of_level, 
-        output_tif, 
-        output_8bit_tif, 
-        reprojected_tif, 
-        output_colored_tif, 
+        # output_tif, 
+        # output_8bit_tif, 
+        # reprojected_tif, 
+        # output_colored_tif, 
         output_tiles, 
         color_relief_file, 
         target_crs='EPSG:3857',
         filter_grib=True
     ):
+
+    base_temp_file_name = os.path.splitext(os.path.basename(grib_file))[0]
+    output_tif = base_temp_file_name + '.tif'
+    output_8bit_tif = base_temp_file_name + '_8bit.tif'
+    output_colored_tif = base_temp_file_name + '_3857.tif'
+    reprojected_tif = base_temp_file_name + '_colored.tif'
+
     data = read_grib2(grib_file, variable_name, type_of_level, filter_grib=filter_grib)
     data = clip_latitude(data)
     convert_to_geotiff(data, output_tif)
@@ -158,7 +179,20 @@ def process_grib2_to_tiles(
     generate_tiles(reprojected_tif, output_tiles, profile='mercator')
     remove_intermediate_files([output_tif, output_8bit_tif, reprojected_tif, output_colored_tif, 'temp.vrt'])
 
-def process_tif_to_tiles(input_tif, output_8bit_tif, reprojected_tif, output_colored_tif, output_tiles, color_relief_file, target_crs='EPSG:3857'):
+def process_tif_to_tiles(
+        input_tif, 
+        # output_8bit_tif, 
+        # reprojected_tif, 
+        # output_colored_tif, 
+        output_tiles, 
+        color_relief_file, 
+        target_crs='EPSG:3857'
+):
+    base_temp_file_name = os.path.splitext(os.path.basename(input_tif))[0]
+    output_8bit_tif = base_temp_file_name + '_8bit.tif'
+    output_colored_tif = base_temp_file_name + '_3857.tif'
+    reprojected_tif = base_temp_file_name + '_colored.tif'
+
     apply_color_relief(input_tif, color_relief_file, output_colored_tif)
     convert_to_8bit(output_colored_tif, output_8bit_tif)
     reproject_geotiff(output_8bit_tif, reprojected_tif, target_crs)
@@ -169,10 +203,10 @@ def process_zipped_grib2_to_tiles(
         gzipped_grib2_file, 
         variable_name, 
         type_of_level, 
-        output_tif, 
-        output_8bit_tif, 
-        reprojected_tif, 
-        output_colored_tif, 
+        # output_tif, 
+        # output_8bit_tif, 
+        # reprojected_tif, 
+        # output_colored_tif, 
         output_tiles, 
         color_relief_file, 
         target_crs='EPSG:3857',
@@ -187,7 +221,18 @@ def process_zipped_grib2_to_tiles(
             shutil.copyfileobj(f_in, f_out)
 
     # Process the decompressed GRIB2 file as normal
-    process_grib2_to_tiles(grib2_file, variable_name, type_of_level, output_tif, output_8bit_tif, reprojected_tif, output_colored_tif, output_tiles, color_relief_file, target_crs)
+    process_grib2_to_tiles(
+        grib2_file, 
+        variable_name, 
+        type_of_level, 
+        # output_tif, 
+        # output_8bit_tif, 
+        # reprojected_tif, 
+        # output_colored_tif, 
+        output_tiles, 
+        color_relief_file, 
+        target_crs,
+        filter_grib=filter_grib)
 
     # Remove the decompressed GRIB2 file
     try:
@@ -197,3 +242,5 @@ def process_zipped_grib2_to_tiles(
         print(f"{grib2_file} not found, skipping.")
     except Exception as e:
         print(f"Error removing {grib2_file}: {e}")
+
+    return output_tiles
