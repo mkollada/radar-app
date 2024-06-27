@@ -5,6 +5,7 @@ import styles from '../styles/Home.module.css'; // Importing the CSS module for 
 
 
 import {USMap, GlobalMap} from '@/components/TileMap';
+import {LoopingTileMap} from '@/components/LoopingTileMap'
 
 const Home: React.FC = () => {
   const [mapType, setMapType] = useState<'GFS_precipitation' | 'MRMS_precipitation' >('GFS_precipitation');
@@ -22,7 +23,7 @@ const Home: React.FC = () => {
 
   return (
     <div className={styles.button_container}>
-      <div>
+      {/* <div>
         <button className={styles.button} onClick={() => {
           setMapType('GFS_precipitation')
           }}>Global Precipitation Radar Map</button>
@@ -30,7 +31,8 @@ const Home: React.FC = () => {
           setMapType('MRMS_precipitation')
           }}>US Precipitation Radar Map</button>
       </div>
-      {renderMap()}
+      {renderMap()} */}
+      <LoopingTileMap directory='PrecipRate' interval={3000} />
     </div>
   );
 };
