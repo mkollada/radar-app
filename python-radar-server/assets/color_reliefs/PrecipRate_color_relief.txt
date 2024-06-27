@@ -1,0 +1,10 @@
+# Precipitation Rate (mm/hr)    Red     Green   Blue    Alpha
+0.0                             0       0       0       0     # Transparent
+0.1                             173     216     230     255   # Light blue for very light precipitation
+1.0                             135     206     235     255   # Sky blue for light precipitation
+2.5                             0       255     255     255   # Cyan for moderate precipitation
+5.0                             0       255     127     255   # Green for moderate to heavy precipitation
+10.0                            255     255     0       255   # Yellow for heavy precipitation
+20.0                            255     165     0       255   # Orange for very heavy precipitation
+50.0                            255     69      0       255   # Red for intense precipitation
+100.0                           139     0       139     255   # Dark magenta for extreme precipitation
