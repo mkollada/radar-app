@@ -15,7 +15,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    const absolutePath = path.join(process.cwd(), directory as string);
+    const absolutePath = path.join(
+      process.cwd(), 'public', 'tiles', directory as string
+    );
     const subdirectories = fs.readdirSync(absolutePath).filter(subdir => {
       return fs.statSync(path.join(absolutePath, subdir)).isDirectory();
     });
