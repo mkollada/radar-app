@@ -1,15 +1,43 @@
-/* components/Map.module.css */
 .mapContainer {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-  
-  .map {
-    height: 600px;
-    width: 100%;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-  }
-  
+  position: relative;
+  width: 100%;
+  height: 100vh; /* Adjust as necessary */
+}
+
+.map {
+  width: 100%;
+  height: 100%;
+}
+
+.legendContainer {
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  align-items: center; /* Center the gradient and labels */
+  top: 10px;
+  right: 10px; /* Change left to right for top-right positioning */
+  background-color: white;
+  padding: 5px;
+  border-radius: 4px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  z-index: 1000; /* Ensure it is on top of the map */
+}
+
+.legendGradient {
+  width: 20px; /* Adjust width as necessary */
+  height: 150px; /* Adjust height as necessary */
+  border-radius: 10px;
+  margin-bottom: 5px; /* Space between gradient and labels */
+}
+
+.legendLabels {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.legendLabel {
+  font-size: 10px;
+  margin-bottom: 2px; /* Space between labels */
+  white-space: nowrap; /* Prevent labels from wrapping */
+}

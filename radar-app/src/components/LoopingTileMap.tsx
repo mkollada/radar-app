@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
-import styles from '../styles/PrecipitationMap.module.css'; // Importing the CSS module for styling
+import styles from '../styles/PrecipitationMap.module.css';
 
-// Dynamic import for MapContainer and TileLayer with SSR disabled
 const MapContainer = dynamic(
   () => import('react-leaflet').then((mod) => mod.MapContainer),
   { ssr: false }
@@ -13,8 +12,9 @@ const TileLayer = dynamic(
   { ssr: false }
 );
 
-interface TileMapProps {
+interface LoopingTileMapProps {
   directory: string;
+  interval: number;
 }
 
 const legendColors = [
@@ -45,36 +45,35 @@ const ColorLegend: React.FC = () => {
   );
 };
 
-export const GlobalMap: React.FC<TileMapProps> = ({ directory }) => {
-  const mapRef = React.useRef(null);
+export const LoopingTileMap: React.FC<LoopingTileMapProps> = ({ directory, interval }) => {
+  const [directories, setDirectories] = useState<string[]>([]);
+  const [currentDirectoryIndex, setCurrentDirectoryIndex] = useState(0);
 
-  return (
-    <div className={styles.mapContainer}>
-      <ColorLegend />
-      <MapContainer
-        center={[0, 0]}
-        zoom={3}
-        className={styles.map}
-        worldCopyJump={true}
-        maxBounds={[[85, -180], [-85, 180]]} // Set max bounds to prevent wrapping
-        maxBoundsViscosity={1.0} // Makes panning to edges smoother
-        ref={mapRef}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
-        />
-        <TileLayer
-          url={`/tiles/${directory}/{z}/{x}/{y}.png`}
-          attribution="&copy; Your Attribution Here"
-        />
-      </MapContainer>
-    </div>
-  );
-};
+  useEffect(() => {
+    const fetchSubdirectories = async () => {
+      const response = await fetch(`/api/getProcessedSubdirectories?directory=${directory}`);
+      const data = await response.json();
+      if (data.subdirectories) {
+        setDirectories(data.subdirectories);
+      }
+    };
 
-export const USMap: React.FC<TileMapProps> = ({ directory }) => {
-  const mapRef = React.useRef(null);
+    fetchSubdirectories();
+  }, [directory]);
+
+  useEffect(() => {
+    if (directories.length > 0) {
+      const timer = setInterval(() => {
+        setCurrentDirectoryIndex((prevIndex) => (prevIndex + 1) % directories.length);
+      }, interval);
+
+      return () => clearInterval(timer);
+    }
+  }, [directories, interval]);
+
+  if (directories.length === 0) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className={styles.mapContainer}>
@@ -86,19 +85,22 @@ export const USMap: React.FC<TileMapProps> = ({ directory }) => {
         worldCopyJump={true}
         maxBounds={[[50, -125], [24, -66.9]]} // Set max bounds for the continental US
         maxBoundsViscosity={1.0} // Makes panning to edges smoother
-        ref={mapRef}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"
         />
-        <TileLayer
-          url={`/tiles/${directory}/{z}/{x}/{y}.png`}
-          attribution="&copy; MRMS Data Contributors"
-        />
+        {directories.map((dir, index) => (
+          <TileLayer
+            url={`/tiles/${directory}/${dir}/{z}/{x}/{y}.png`}
+            attribution="&copy; MRMS Data Contributors"
+            key={dir}
+            opacity={index === currentDirectoryIndex ? 1 : 0}
+          />
+        ))}
       </MapContainer>
     </div>
   );
 };
 
-export default { GlobalMap, USMap };
+export default LoopingTileMap;
