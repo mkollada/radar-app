@@ -4,9 +4,10 @@ import fs from 'fs';
 import path from 'path';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { data_source, variable_name } = req.query;
   
-  const python_server_url = 'https://127.0.0.1:5000'
+  const { data_source, data_type_name } = req.query;
+  
+  const python_server_url = 'http://127.0.0.1:5000/update-data/'
 
   if (!data_source) {
     return res.status(400).json({ error: 'data_source parameter is required' });
@@ -14,18 +15,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'data_source parameter must be a string' });
   }
 
-  if (!variable_name) {
-    return res.status(400).json({ error: 'variable_name parameter is required' });
-  } else if (typeof variable_name != 'string') {
-    return res.status(400).json({ error: 'variable_name parameter must be a string' });
+  if (!data_type_name) {
+    return res.status(400).json({ error: 'data_type_name parameter is required' });
+  } else if (typeof data_type_name != 'string') {
+    return res.status(400).json({ error: 'data_type_name parameter must be a string' });
   }
 
   try {
+    const python_update_data_url = python_server_url + data_source + '/' + data_type_name
     const response  = await fetch( 
-        path.join(python_server_url, data_source, variable_name)
+        python_update_data_url
     )
+
     if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
+    } else {
+      const data = await response.json()
+      return res.status(200).json(data)
     }
 
   } catch (error) {

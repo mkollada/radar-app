@@ -49,17 +49,23 @@ export const LoopingTileMap: React.FC<LoopingTileMapProps> = ({ directory, inter
   const [directories, setDirectories] = useState<string[]>([]);
   const [currentDirectoryIndex, setCurrentDirectoryIndex] = useState(0);
 
-  useEffect(() => {
-    const fetchSubdirectories = async () => {
-      const response = await fetch(`/api/getProcessedSubdirectories?directory=${directory}`);
-      const data = await response.json();
-      if (data.subdirectories) {
-        setDirectories(data.subdirectories);
-      }
-    };
+  const fetchSubdirectories = async () => {
+    const response = await fetch(`/api/updateData?data_source=mrms&data_type_name=PrecipRate`);
+    const data = await response.json();
+    if (data.directories) {
+      setDirectories(data.directories);
+    }
+  };
 
+  useEffect(() => {
     fetchSubdirectories();
-  }, [directory]);
+
+    const updateInterval = setInterval(() => {
+      fetchSubdirectories();
+    }, 120000); // 2 minutes
+
+    return () => clearInterval(updateInterval);
+  }, []);
 
   useEffect(() => {
     if (directories.length > 0) {
@@ -92,7 +98,7 @@ export const LoopingTileMap: React.FC<LoopingTileMapProps> = ({ directory, inter
         />
         {directories.map((dir, index) => (
           <TileLayer
-            url={`/tiles/${directory}/${dir}/{z}/{x}/{y}.png`}
+            url={`/tiles/${dir}/{z}/{x}/{y}.png`}
             attribution="&copy; MRMS Data Contributors"
             key={dir}
             opacity={index === currentDirectoryIndex ? 1 : 0}

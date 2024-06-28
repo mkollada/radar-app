@@ -32,7 +32,7 @@ const Home: React.FC = () => {
           }}>US Precipitation Radar Map</button>
       </div>
       {renderMap()} */}
-      <LoopingTileMap directory='PrecipRate' interval={3000} />
+      <LoopingTileMap directory='PrecipRate' interval={500} />
     </div>
   );
 };
