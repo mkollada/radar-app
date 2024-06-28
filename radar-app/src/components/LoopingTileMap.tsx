@@ -48,7 +48,6 @@ const ColorLegend: React.FC = () => {
 export const LoopingTileMap: React.FC<LoopingTileMapProps> = ({ directory, interval }) => {
   const [directories, setDirectories] = useState<string[]>([]);
   const [currentDirectoryIndex, setCurrentDirectoryIndex] = useState(0);
-  const mapRef = React.useRef(null);
 
   useEffect(() => {
     const fetchSubdirectories = async () => {
@@ -86,17 +85,19 @@ export const LoopingTileMap: React.FC<LoopingTileMapProps> = ({ directory, inter
         worldCopyJump={true}
         maxBounds={[[50, -125], [24, -66.9]]} // Set max bounds for the continental US
         maxBoundsViscosity={1.0} // Makes panning to edges smoother
-        ref={mapRef}
       >
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"
         />
-        <TileLayer
-          url={`/tiles/${directory}/${directories[currentDirectoryIndex]}/{z}/{x}/{y}.png`}
-          attribution="&copy; MRMS Data Contributors"
-          key={directories[currentDirectoryIndex]}
-        />
+        {directories.map((dir, index) => (
+          <TileLayer
+            url={`/tiles/${directory}/${dir}/{z}/{x}/{y}.png`}
+            attribution="&copy; MRMS Data Contributors"
+            key={dir}
+            opacity={index === currentDirectoryIndex ? 1 : 0}
+          />
+        ))}
       </MapContainer>
     </div>
   );
