@@ -175,10 +175,15 @@ class MRMSDataSource(DataSource):
         if output_dir not in self.processed_files[data_type.name]:
             self.processed_files[data_type.name].append(output_dir)
 
-    def download_data(self):
+    def download_data(self, data_type_name):
+
         for data_type in self.data_types:
-            self.fetch_and_download_mrms_data(data_type)
-        self.clean_up_processed_files()
+            if data_type_name == data_type.name:
+                self.fetch_and_download_mrms_data(data_type)
+                self.clean_up_processed_files()
+                return self.processed_files[data_type_name]
+        
+        raise Exception(f'{data_type_name} not in this MRMSDataSource')
     
     def process_data(self):
         return super().process_data()
