@@ -23,7 +23,7 @@ mrms_data_source = MRMSDataSource(
     processed_data_folder=os.path.join(next_tiles_dir,'mrms'),
     data_types=[
         MRMSDataType(
-            name='SeamlessHSR', 
+            name='PrecipRate', 
             variable_name='unknown',
             type_of_level=None,
         )
@@ -45,7 +45,12 @@ def updateData(data_source, data_type_name):
         print(f'{data_source} found. Updating data...')
         try:
             data_dirs = data_sources[data_source].download_data(data_type_name)
-            return jsonify({"directories":data_dirs}), 200
+            send_data_dirs = []
+            for dir in data_dirs:
+                new_dir = os.path.join(*dir.split('/')[4:])
+                send_data_dirs.append(new_dir)
+            
+            return jsonify({"directories":send_data_dirs}), 200
         except Exception as e:
             logging.error(f"Error: {e}")
             return jsonify({"error": str(e)}), 500
