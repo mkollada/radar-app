@@ -33,7 +33,7 @@ mrms_data_source = MRMSDataSource(
             type_of_level=None,
         )
     ],
-    n_files=10
+    n_files=3
 )
 
 data_sources = {}
