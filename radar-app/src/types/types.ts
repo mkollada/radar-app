@@ -3,4 +3,13 @@ export interface PrecipitationData {
     lastModified: Date;
     data: GeoJSON.FeatureCollection;
   }
+
+export type UpdateDataResponse = {
+  dataLocs: {
+    'mrms': {
+      [dataType: string]: string[];
+    };
+  };
+};
+
   

@@ -13,7 +13,7 @@ const TileLayer = dynamic(
 );
 
 interface LoopingTileMapProps {
-  directory: string;
+  directories: string[];
   interval: number;
 }
 
@@ -45,37 +45,25 @@ const ColorLegend: React.FC = () => {
   );
 };
 
-export const LoopingTileMap: React.FC<LoopingTileMapProps> = ({ directory, interval }) => {
-  const [directories, setDirectories] = useState<string[]>([]);
+export const LoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, interval }) => {
+  
   const [currentDirectoryIndex, setCurrentDirectoryIndex] = useState(0);
-
-  const fetchSubdirectories = async () => {
-    const response = await fetch(`/api/updateData?data_source=mrms&data_type_name=PrecipRate`);
-    const data = await response.json();
-    if (data.directories) {
-      setDirectories(data.directories);
-    }
-  };
-
-  useEffect(() => {
-    fetchSubdirectories();
-
-    const updateInterval = setInterval(() => {
-      fetchSubdirectories();
-    }, 120000); // 2 minutes
-
-    return () => clearInterval(updateInterval);
-  }, []);
+  
 
   useEffect(() => {
     if (directories.length > 0) {
       const timer = setInterval(() => {
         setCurrentDirectoryIndex((prevIndex) => (prevIndex + 1) % directories.length);
+        
       }, interval);
 
       return () => clearInterval(timer);
     }
   }, [directories, interval]);
+
+  useEffect(() => {
+    console.log(directories[currentDirectoryIndex])
+  }, [currentDirectoryIndex])
 
   if (directories.length === 0) {
     return <div>Loading...</div>;
@@ -87,6 +75,8 @@ export const LoopingTileMap: React.FC<LoopingTileMapProps> = ({ directory, inter
       <MapContainer
         center={[37.8, -96.9]} // Center over the US
         zoom={4} // Appropriate zoom level for the US
+        minZoom={3}
+        maxZoom={5}
         className={styles.map}
         worldCopyJump={true}
         maxBounds={[[50, -125], [24, -66.9]]} // Set max bounds for the continental US
