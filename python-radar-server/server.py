@@ -26,6 +26,11 @@ mrms_data_source = MRMSDataSource(
             name='PrecipRate', 
             variable_name='unknown',
             type_of_level=None,
+        ),
+        MRMSDataType(
+            name='SeamlessHSR', 
+            variable_name='unknown',
+            type_of_level=None,
         )
     ],
     n_files=10
@@ -39,21 +44,25 @@ data_sources['mrms'] = mrms_data_source
 def index():
     return "Welcome to the Spartan Weather Data API!"
 
-@app.route('/update-data/<data_source>/<data_type_name>', methods=['GET'])
-def updateData(data_source, data_type_name):
-    if data_source in data_sources:
-        print(f'{data_source} found. Updating data...')
-        try:
-            data_dirs = data_sources[data_source].download_data(data_type_name)
-            send_data_dirs = []
-            for dir in data_dirs:
-                new_dir = os.path.join(*dir.split('/')[4:])
-                send_data_dirs.append(new_dir)
+@app.route('/update-data', methods=['GET'])
+def updateData():
+    try:
+        update_data_dirs = {}
+        for data_source in data_sources:
+            print(f'{data_source} found. Updating data...')
             
-            return jsonify({"directories":send_data_dirs}), 200
-        except Exception as e:
-            logging.error(f"Error: {e}")
-            return jsonify({"error": str(e)}), 500
+            data_dirs = data_sources[data_source].download_data()
+            update_data_dirs[data_source] = {}
+            for data_type in data_dirs:
+                update_data_dirs[data_source][data_type] = []
+                for dir in data_dirs[data_type]:
+                    new_dir = os.path.join(*dir.split('/')[4:])
+                    update_data_dirs[data_source][data_type].append(new_dir)
+            
+            return jsonify({"dataLocs":update_data_dirs}), 200
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500
 
     else:
         error = f'{data_source} is not an active data source.'

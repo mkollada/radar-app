@@ -42,28 +42,31 @@ class MRMSDataSource(DataSource):
             processed_dir = os.path.join(self.processed_data_folder, data_type.name)
             if os.path.exists(processed_dir):
                 raw_dir_files = [os.path.join(processed_dir, dirname) for dirname in os.listdir(processed_dir) if dirname.endswith('grib2')]
-                processed_files[data_type.name] = raw_dir_files
+                processed_files[data_type.name] = sorted(raw_dir_files, key=lambda x: self.extract_datetime_from_path(x))
             else:
                 os.makedirs(processed_dir)
                 processed_files[data_type.name] = []
 
         return processed_files
 
-    def clean_up_processed_files(self):
-        
-        for data_type in self.data_types:
-            
-            data_type_dir = os.path.join(self.processed_data_folder, data_type.name)
+    def extract_datetime_from_path(self, path):
+        try:
+            parts = path.split('_')
+            date_part = parts[-1].split('.')[0]
+            return datetime.strptime(date_part, '%Y%m%d-%H%M%S')
+        except (IndexError, ValueError):
+            return datetime.min
 
+    def clean_up_processed_files(self):
+        for data_type in self.data_types:
+            data_type_dir = os.path.join(self.processed_data_folder, data_type.name)
             dirs = [os.path.join(data_type_dir, dirname) for dirname in os.listdir(data_type_dir) if dirname.endswith('grib2')]
             dirs_with_dates = []
-            
+
             for dir in dirs:
                 try:
                     if not 'latest' in dir:
-                        parts = dir.split('_')
-                        date_part = parts[-1].split('.')[0]
-                        dir_date = datetime.strptime(date_part, '%Y%m%d-%H%M%S')
+                        dir_date = self.extract_datetime_from_path(dir)
                         dirs_with_dates.append((dir, dir_date))
                 except (IndexError, ValueError) as e:
                     print(f"Error parsing date from {dir}: {e}")
@@ -129,22 +132,9 @@ class MRMSDataSource(DataSource):
         data_type_dir = os.path.join(self.raw_data_folder, data_type.name)
         processed_data_type_dir = os.path.join(self.processed_data_folder, data_type.name)
 
-        latest_file_url = os.path.join(base_url, f'MRMS_{data_type.name}.latest.grib2.gz')
-        latest_filename = f"MRMS_{data_type.name}.latest.grib2.gz"
-        latest_output_dir = os.path.join(processed_data_type_dir, os.path.splitext(latest_filename)[0])
-        
-        latest_grib_file_path = self.download_file(latest_file_url, data_type_dir, latest_filename, data_type)
-        self.process_data_file(latest_grib_file_path, data_type, latest_output_dir)
-        print(f'{latest_grib_file_path} processed to {latest_output_dir}. Removing raw file...')
-        os.remove(latest_grib_file_path)
-        os.remove(os.path.join(os.path.dirname(latest_grib_file_path),os.path.splitext(latest_filename)[0]+'.9093e.idx'))
-        print(f'{latest_grib_file_path} removed.')
-
         for file_link, _ in recent_file_links:
             file_url = os.path.join(base_url, file_link)
             filename = file_link
-            print('lasdjf;alsdjf')
-            print(filename)
             output_dir = os.path.join(processed_data_type_dir, os.path.splitext(filename)[0])
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
@@ -152,12 +142,14 @@ class MRMSDataSource(DataSource):
                 self.process_data_file(file_path, data_type, output_dir)
                 print(f'{file_path} processed to {output_dir}. Removing raw file...')
                 os.remove(file_path)
-                os.remove(os.path.join(os.path.dirname(file_path),os.path.splitext(filename)[0]+'.9093e.idx'))
+                os.remove(os.path.join(os.path.dirname(file_path), os.path.splitext(filename)[0] + '.9093e.idx'))
                 print(f'{file_path} removed.')
             else:
-                if not output_dir in self.processed_files[data_type.name]:
+                if output_dir not in self.processed_files[data_type.name]:
                     self.processed_files[data_type.name].append(output_dir)
                 print(f'Processed files already exist at {output_dir}. Skipping...')
+
+        self.processed_files[data_type.name] = sorted(self.processed_files[data_type.name], key=lambda x: self.extract_datetime_from_path(x))
 
         return True
 
@@ -174,17 +166,16 @@ class MRMSDataSource(DataSource):
 
         if output_dir not in self.processed_files[data_type.name]:
             self.processed_files[data_type.name].append(output_dir)
-
-    def download_data(self, data_type_name):
-
-        for data_type in self.data_types:
-            if data_type_name == data_type.name:
-                self.fetch_and_download_mrms_data(data_type)
-                self.clean_up_processed_files()
-                return self.processed_files[data_type_name]
         
-        raise Exception(f'{data_type_name} not in this MRMSDataSource')
-    
+        self.processed_files[data_type.name] = sorted(self.processed_files[data_type.name], key=lambda x: self.extract_datetime_from_path(x))
+
+    def download_data(self):
+        for data_type in self.data_types:
+            self.fetch_and_download_mrms_data(data_type)
+            self.clean_up_processed_files()
+
+        return self.processed_files
+            
     def process_data(self):
         return super().process_data()
     
