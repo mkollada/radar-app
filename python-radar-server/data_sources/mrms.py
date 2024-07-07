@@ -1,9 +1,13 @@
 import os
 import shutil
+from typing import List
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 from datetime import datetime
+
+from classes import DataType
+from classes import GeoDataFile
 from data_source import DataSource
 from utils.data_to_tiles import process_zipped_grib2_to_tiles
 
@@ -147,3 +151,22 @@ class MRMSDataSource(DataSource):
     
     def get_processed_data(self):
         return super().get_processed_data()
+    
+    
+
+    def check_if_downloaded(self, recent_files: List[GeoDataFile]):
+        return super().check_if_downloaded(recent_files)
+
+
+
+
+    def download_files(self, files_to_download: List[GeoDataFile]):
+        return super().download_files(files_to_download)
+
+
+
+    def fetch_data_files(self, data_type: DataType):
+        return super().fetch_data_files(data_type)
+    
+    def remove_downloaded_files(self, downloaded_files: List[GeoDataFile]):
+        return super().remove_downloaded_files(downloaded_files)
