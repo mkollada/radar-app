@@ -6,6 +6,6 @@ The two directories separate the API and the Map component:
 
 This is the python API that downloads and processes
 
-### `radap-app` (coming soon)
+### `radap-app`
 
-This is the next.js/React component that will display the map and weather data
+This is the next.js/React component that displays the map and weather data
