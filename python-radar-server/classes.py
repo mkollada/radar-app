@@ -33,4 +33,5 @@ class GeoDataFile:
 @dataclass
 class NexradGeoDataFile(GeoDataFile):
     scan: nexradaws.resources.awsnexradfile.AwsNexradFile
+    processed_path: str
     
