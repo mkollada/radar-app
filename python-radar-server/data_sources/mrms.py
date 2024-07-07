@@ -43,6 +43,27 @@ class MRMSDataSource(DataSource):
         except (IndexError, ValueError):
             return datetime.min
 
+    def clean_up_processed_files(self):
+        for data_type in self.data_types:
+            data_type_dir = os.path.join(self.processed_data_folder, data_type.name)
+            dirs = [os.path.join(data_type_dir, dirname) for dirname in os.listdir(data_type_dir) if dirname.endswith('grib2')]
+            dirs_with_dates = []
+
+            for dir in dirs:
+                try:
+                    dir_date = self.extract_datetime_from_path(dir)
+                    dirs_with_dates.append((dir, dir_date))
+                except (IndexError, ValueError) as e:
+                    print(f"Error parsing date from {dir}: {e}")
+            
+            dirs_with_dates.sort(key=lambda x: x[1], reverse=True)
+            dirs_to_keep = dirs_with_dates[:self.n_files]
+            dirs_to_delete = dirs_with_dates[self.n_files:]
+            
+            for dir, _ in dirs_to_delete:
+                shutil.rmtree(dir)
+                print(f"Deleted old dir: {dir}")
+                self.processed_files[data_type.name].remove(dir)
     
     def fetch_data_paths(self, base_url):
         response = requests.get(base_url)
