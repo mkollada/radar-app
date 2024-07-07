@@ -6,9 +6,6 @@ import path from 'path';
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const { directory } = req.query;
 
-  console.log('here')
-  console.log(process.cwd())
-  
 
   if (!directory) {
     return res.status(400).json({ error: 'Directory parameter is required' });
