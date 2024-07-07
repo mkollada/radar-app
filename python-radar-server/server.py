@@ -4,6 +4,7 @@ import os
 import logging
 
 from data_sources.mrms import MRMSDataSource, MRMSDataType
+from data_sources.nexrad import NexradDataSource
 
 
 app = Flask(__name__)
@@ -39,6 +40,9 @@ mrms_data_source = MRMSDataSource(
 data_sources = {}
 data_sources['mrms'] = mrms_data_source
 
+nexrad_data_source = NexradDataSource(raw_data_folder='./data/nexrad/raw/', processed_data_folder='../radar-app/public/nexrad', data_types=None)
+
+
 
 @app.route('/')
 def index():
@@ -68,6 +72,12 @@ def updateData():
         error = f'{data_source} is not an active data source.'
         logging.error(f"Error: {error}")
         return jsonify({"error": str(error)}), 404
+    
+@app.route('/update-nexrad-site/<path:site_code>/<path:variable_name>', methods=['GET'])
+def updateNexradSite(site_code: str, variable_name: str):
+    processed_file = nexrad_data_source.download_data(site_code=site_code, variable_name=variable_name)
+
+    return jsonify({'processed_file':processed_file}), 200
 
 
 if __name__ == '__main__':
