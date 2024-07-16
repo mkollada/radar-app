@@ -77,11 +77,11 @@ class NexradDataSource(DataSource):
                 raise ValueError('No success or failure in downloading Nexrad files.')
         return downloaded_files
     
-    def extract_datetime_from_path(self, path):
+    def extract_datetime_from_path(self, path: str):
         return super().extract_datetime_from_path(path)
     
-    def download_data(self):
-        return super().download_data()
+    # def download_data(self):
+    #     return super().download_data()
 
     def remove_downloaded_files(self, downloaded_files: List[NexradGeoDataFile]):
         return super().remove_downloaded_files(downloaded_files)
@@ -89,7 +89,10 @@ class NexradDataSource(DataSource):
     def process_files(self, downloaded_files: List[NexradGeoDataFile]):
         for file in downloaded_files:
             processed_file = self.process_file(file)
-            self.processed_files.append(processed_file)
+            if processed_file not in self.processed_files:
+                self.processed_files.append(processed_file)
+            else:
+                print(f'{processed_file} already in self.processed_files, skipping appending.')
         return self.processed_files
 
     def process_file(self, file: NexradGeoDataFile, variable_name='reflectivity'):
