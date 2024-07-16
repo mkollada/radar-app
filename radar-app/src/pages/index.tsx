@@ -15,7 +15,7 @@ type UpdateDataResponse = {
 
 const Home: React.FC = () => {
   const [mapType, setMapType] = useState<
-  'MRMS_SeamlessHSR' | 'MRMS_PrecipRate' | 'MRMS_MergedReflectivityComposite' | 'NEXRAD_reflectivity'
+  'MRMS_SeamlessHSR' | 'MRMS_PrecipRate' | 'MRMS_MergedReflectivityComposite' | 'NEXRAD_reflectivity' | 'GPM_PrecipRate'
   >('MRMS_PrecipRate');
   const [dataLocs, setDataLocs] = useState<UpdateDataResponse['dataLocs']>({
     'mrms':{
@@ -52,13 +52,15 @@ const Home: React.FC = () => {
   const renderMap = () => {
     switch (mapType) {
       case 'MRMS_SeamlessHSR':
-        return <LoopingTileMap directories={dataLocs['mrms']['SeamlessHSR']} interval={2000} />;
+        return <LoopingTileMap directories={dataLocs['mrms']['SeamlessHSR']} interval={500} />;
       case 'MRMS_PrecipRate':
-        return <LoopingTileMap directories={dataLocs['mrms']['PrecipRate']} interval={2000} />;
-      case 'MRMS_MergedReflectivityComposite':
-        return <LoopingTileMap directories={dataLocs['mrms']['MergedReflectivityComposite']} interval={2000} />;
+        return <LoopingTileMap directories={dataLocs['mrms']['PrecipRate']} interval={500} />;
+      // case 'MRMS_MergedReflectivityComposite':
+      //   return <LoopingTileMap directories={dataLocs['mrms']['MergedReflectivityComposite']} interval={2000} />;
       case 'NEXRAD_reflectivity':
         return <NexradMap />
+      case 'GPM_PrecipRate':
+        return <GlobalMap directory='' />
       default:
         return null;
     }
@@ -69,8 +71,9 @@ const Home: React.FC = () => {
       <div>
         <button className={styles.button} onClick={() => setMapType('MRMS_SeamlessHSR')}>MRMS - SeamlessHSR</button>
         <button className={styles.button} onClick={() => setMapType('MRMS_PrecipRate')}>MRMS - PrecipRate</button>
-        <button className={styles.button} onClick={() => setMapType('MRMS_MergedReflectivityComposite')}>MRMS - MergedReflectivityComposite</button>
+        {/* <button className={styles.button} onClick={() => setMapType('MRMS_MergedReflectivityComposite')}>MRMS - MergedReflectivityComposite</button> */}
         <button className={styles.button} onClick={() => setMapType('NEXRAD_reflectivity')}>NEXRAD - Reflectivity</button>
+        <button className={styles.button} onClick={() => setMapType('GPM_PrecipRate')}>GPM - Global Precipitation</button>
       </div>
       {renderMap()}
     </div>
