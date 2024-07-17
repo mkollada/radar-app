@@ -2,9 +2,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 import os
+import shutil
 import nexradaws
 import nexradaws.resources
 import nexradaws.resources.awsnexradfile
+import logging
 
 @dataclass
 class DataType:
@@ -26,10 +28,23 @@ class GeoDataFile:
     def remove_local_file(self):
         if self.local_path and os.path.exists(self.local_path):
             os.remove(self.local_path)
-            print(f"Removed file: {self.local_path}")
+            logging.info(f'Removed file: {self.local_path}')
             self.local_path = ''
         else:
-            print("File does not exist or local_path is None")
+            logging.info(f'Tried to remove local_path: {self.local_path}, but it does not exist.')
+
+    def remove_processed_dir(self):
+        if self.processed_dir and os.path.exists(self.processed_dir):
+            shutil.rmtree(self.processed_dir)
+            logging.info(f'Removed dir: {self.processed_dir}')
+            self.remote_path = ''
+        else:
+            logging.info(f'Tried to remove processed_dir: {self.processed_dir} but it does not exist.')
+
+    def __lt__(self, other):
+        if not isinstance(other, GeoDataFile):
+            return NotImplemented
+        return self.datetime < other.datetime
 
 
 @dataclass
