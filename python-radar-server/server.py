@@ -5,6 +5,7 @@ import logging
 
 from data_sources.mrms import MRMSDataSource, MRMSDataType
 from data_sources.nexrad import NexradDataSource
+from data_sources.gpm import GPMDataSource
 
 
 app = Flask(__name__)
@@ -42,11 +43,27 @@ data_sources['mrms'] = mrms_data_source
 
 nexrad_data_source = NexradDataSource(raw_data_folder='./data/nexrad/raw/', processed_data_folder='../radar-app/public/nexrad', data_types=None)
 
-
+# Create GPM Data Source
+gpm_data_source = GPMDataSource(
+    raw_data_folder='./data/raw/gpm/', 
+    processed_data_folder='../radar-app/public/tiles/gpm/',
+    n_files=10
+)
 
 @app.route('/')
 def index():
     return "Welcome to the Spartan Weather Data API!"
+
+@app.route('/update-gpm-data', methods=['GET'])
+def updateGPMData():
+    try:
+        processed_dirs = gpm_data_source.update_data()
+        return jsonify({"directories":processed_dirs}), 200
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500 
+    
+
 
 @app.route('/update-data', methods=['GET'])
 def updateData():

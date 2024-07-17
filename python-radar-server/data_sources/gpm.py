@@ -38,7 +38,7 @@ class GPMDataSource(DataSource):
             if check_dir not in processed_dirs:
                 shutil.rmtree(check_dir)
                 logging.info(f'Removing unnecessary dir: {check_dir}')
-                
+                        
         logging.info('processed_files cleaned.')
 
     def fetch_data_files(self) -> List[GeoDataFile]:
@@ -96,9 +96,6 @@ class GPMDataSource(DataSource):
                     logging.info(f'{processed_dir} exists, but was not in self.processed_files. adding...')
                     file.processed_dir = processed_dir
                     self.processed_files.append(file)
-                
-                
-
         return files_to_download
 
     
@@ -179,7 +176,7 @@ class GPMDataSource(DataSource):
             if processed_file:
                 self.processed_files.append(processed_file)
     
-    def get_processed_dirs(self):
+    def get_processed_dirs(self) -> List[str]:
         processed_dirs = []
         for file in self.processed_files:
             processed_dirs.append(file.processed_dir)
