@@ -98,4 +98,5 @@ def updateNexradSite(site_code: str, variable_name: str):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     app.run(debug=True)
