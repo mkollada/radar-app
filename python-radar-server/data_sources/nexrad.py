@@ -18,7 +18,7 @@ class NexradDataSource(DataSource):
         self.nexrad_interface = nexradaws.NexradAwsInterface()
         self.processed_files: List[NexradGeoDataFile] = []
     
-    def fetch_data_files(self, site_code: str, time_delta: timedelta = timedelta(days=1)):
+    def fetch_data_files(self, site_code: str, time_delta: timedelta = timedelta(days=1)) -> List[NexradGeoDataFile]:
         try:
             now = datetime.now(timezone.utc)
             scans = self.nexrad_interface.get_avail_scans_in_range(
@@ -32,6 +32,7 @@ class NexradDataSource(DataSource):
                     if 'MDM' not in scan.filename:
                         nexrad_geo_data_file = NexradGeoDataFile(
                             remote_path=scan.key,
+                            key=scan.key,
                             datetime=scan.scan_time,
                             scan=scan,
                             local_path='',
@@ -42,14 +43,17 @@ class NexradDataSource(DataSource):
             else:
                 raise ValueError('Error, nexrad fetch_data_scans returned no files')
 
-            return nexrad_geo_data_files
+            
         except Exception as e:
             logging.error('Error fetching scans:', e)
+        return nexrad_geo_data_files
 
-    def get_download_path(self, nexrad_geo_data_file: NexradGeoDataFile):
+    def get_download_path(self, nexrad_geo_data_file: NexradGeoDataFile) -> str:
         return os.path.join(self.raw_data_folder,nexrad_geo_data_file.scan.filename)
 
-    def check_if_downloaded(self, nexrad_geo_data_files: List[NexradGeoDataFile], variable_name: str):
+    def check_if_downloaded(
+            self, nexrad_geo_data_files: List[NexradGeoDataFile], variable_name: str
+    ) -> List[NexradGeoDataFile]:
         files_to_download: List[NexradGeoDataFile] = []
 
         for file in nexrad_geo_data_files:
@@ -61,7 +65,7 @@ class NexradDataSource(DataSource):
 
         return files_to_download
     
-    def download_files(self, files_to_download: List[NexradGeoDataFile]):
+    def download_files(self, files_to_download: List[NexradGeoDataFile]) -> List[NexradGeoDataFile]:
         downloaded_files: List[NexradGeoDataFile] = []
         for file in files_to_download:
             print(f'Downloading {file.scan.key}...')
@@ -86,7 +90,7 @@ class NexradDataSource(DataSource):
     def remove_downloaded_files(self, downloaded_files: List[NexradGeoDataFile]):
         return super().remove_downloaded_files(downloaded_files)
 
-    def process_files(self, downloaded_files: List[NexradGeoDataFile]):
+    def process_files(self, downloaded_files: List[NexradGeoDataFile]) -> List[NexradGeoDataFile]:
         for file in downloaded_files:
             processed_file = self.process_file(file)
             if processed_file not in self.processed_files:
@@ -95,7 +99,7 @@ class NexradDataSource(DataSource):
                 print(f'{processed_file} already in self.processed_files, skipping appending.')
         return self.processed_files
 
-    def process_file(self, file: NexradGeoDataFile, variable_name='reflectivity'):
+    def process_file(self, file: NexradGeoDataFile, variable_name='reflectivity') -> NexradGeoDataFile:
         
         output_path = self.get_processed_path(file=file, variable_name=variable_name)
         output_dir = os.path.dirname(output_path)
@@ -128,16 +132,12 @@ class NexradDataSource(DataSource):
 
         return file
     
-    def get_processed_path(self, file: NexradGeoDataFile, variable_name: str):
+    def get_processed_path(self, file: NexradGeoDataFile, variable_name: str) -> str:
         output_dir = os.path.join(self.processed_data_folder,variable_name,file.scan.awspath)
         output_path = os.path.join(output_dir, f'{file.scan.filename}.png')
         return output_path
     
-    # def get_processed_file_paths(self):
-    #     processed_file_paths = []
-    #     for file in self.processed_files
-    
-    def download_data(self, site_code: str, variable_name: str):
+    def update_data(self, site_code: str, variable_name: str) -> str:
         recent_data_files = self.fetch_data_files(site_code=site_code)
         use_file = recent_data_files[-1]
 
@@ -153,6 +153,9 @@ class NexradDataSource(DataSource):
         else:
             print(f'{processed_path} exists, Skipping download of {use_file.scan.awspath}...')
             return processed_path
+        
+    def download_data(self):
+        return super().download_data()
 
 
         
