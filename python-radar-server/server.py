@@ -58,7 +58,11 @@ def index():
 def updateGPMData():
     try:
         processed_dirs = gpm_data_source.update_data()
-        return jsonify({"directories":processed_dirs}), 200
+        radar_app_dirs = []
+        for dir in processed_dirs:
+            radar_app_dir = os.path.join(*dir.split('/')[4:])
+            radar_app_dirs.append(radar_app_dir)
+        return jsonify({"directories":radar_app_dirs}), 200
     except Exception as e:
         logging.error(f"Error: {e}")
         return jsonify({"error": str(e)}), 500 
