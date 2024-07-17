@@ -24,20 +24,24 @@ const Home: React.FC = () => {
     }
 });
 
-  const gpm_directories = ['gpm/Global/gpm_30mn/2024/199/gpm_30mn.20240717.105959',
-    'gpm/Global/gpm_30mn/2024/199/gpm_30mn.20240717.102959',
-    'gpm/Global/gpm_30mn/2024/199/gpm_30mn.20240717.095959',
-    'gpm/Global/gpm_30mn/2024/199/gpm_30mn.20240717.092959',
-    'gpm/Global/gpm_30mn/2024/199/gpm_30mn.20240717.085959',
-    'gpm/Global/gpm_30mn/2024/199/gpm_30mn.20240717.082959',
-    'gpm/Global/gpm_30mn/2024/199/gpm_30mn.20240717.075959',
-    'gpm/Global/gpm_30mn/2024/199/gpm_30mn.20240717.072959',
-    'gpm/Global/gpm_30mn/2024/199/gpm_30mn.20240717.065959',
-    'gpm/Global/gpm_30mn/2024/199/gpm_30mn.20240717.062959']
+  const [gpmDirs, setGpmDirs] = useState<string[]>([])
+
+  const updateGPMData = async () => {
+    const response = await fetch(`/api/updateGPMData`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.directories) {
+        setGpmDirs(data.directories);
+      }
+    } else {
+      console.error(
+        '/updateGPMData call failed'
+      )
+    }
+  }
 
   const updateData = async () => {
     const response = await fetch(`/api/updateData`);
-    console.log(response)
     if (response.ok) {
       const data: UpdateDataResponse = await response.json();
       if (data.dataLocs) {
@@ -45,17 +49,23 @@ const Home: React.FC = () => {
       }
     } else {
       console.error(
-        '/update-data call failed'
+        '/updateData call failed'
       )
     }
   };
 
+  // Setting timers for updating each of the data types
   useEffect(() => {
-    updateData();
+    updateGPMData()
+    updateData()
 
     const updateInterval = setInterval(() => {
       updateData();
     }, 120000); // 2 minutes
+
+    const gpmUpdateInterval = setInterval(() => {
+      updateGPMData()
+    }, 1800000)
 
     return () => clearInterval(updateInterval);
   }, []);
@@ -71,7 +81,7 @@ const Home: React.FC = () => {
       case 'NEXRAD_reflectivity':
         return <NexradMap />
       case 'GPM_PrecipRate':
-        return <GlobalLoopingTileMap directories={gpm_directories} interval={500}/>
+        return <GlobalLoopingTileMap directories={gpmDirs} interval={500}/>
       default:
         return null;
     }

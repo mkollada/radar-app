@@ -46,15 +46,15 @@ const ColorLegend: React.FC = () => {
 };
 
 export const USLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, interval }) => {
-  
+
   const [currentDirectoryIndex, setCurrentDirectoryIndex] = useState(0);
-  
+
 
   useEffect(() => {
     if (directories.length > 0) {
       const timer = setInterval(() => {
         setCurrentDirectoryIndex((prevIndex) => (prevIndex + 1) % directories.length);
-        
+
       }, interval);
 
       return () => clearInterval(timer);
@@ -100,15 +100,15 @@ export const USLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, i
 };
 
 export const GlobalLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, interval }) => {
-  
+
   const [currentDirectoryIndex, setCurrentDirectoryIndex] = useState(0);
-  
+
 
   useEffect(() => {
     if (directories.length > 0) {
       const timer = setInterval(() => {
         setCurrentDirectoryIndex((prevIndex) => (prevIndex + 1) % directories.length);
-        
+
       }, interval);
 
       return () => clearInterval(timer);
