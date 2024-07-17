@@ -19,6 +19,7 @@ class GeoDataFile:
     remote_path: str
     local_path: str
     processed_dir: str
+    key: str
     
     # data_type: DataType
 
@@ -26,6 +27,7 @@ class GeoDataFile:
         if self.local_path and os.path.exists(self.local_path):
             os.remove(self.local_path)
             print(f"Removed file: {self.local_path}")
+            self.local_path = ''
         else:
             print("File does not exist or local_path is None")
 

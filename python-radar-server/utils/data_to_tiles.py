@@ -194,9 +194,7 @@ def process_tif_to_tiles(
     reprojected_tif = base_temp_file_name + '_colored.tif'
 
     apply_color_relief(input_tif, color_relief_file, output_colored_tif)
-    convert_to_8bit(output_colored_tif, output_8bit_tif)
-    reproject_geotiff(output_8bit_tif, reprojected_tif, target_crs)
-    generate_tiles(reprojected_tif, output_tiles, profile='mercator')
+    generate_tiles(output_colored_tif, output_tiles, profile='mercator')
     remove_intermediate_files([output_8bit_tif, reprojected_tif, output_colored_tif, 'temp.vrt'])
 
 def process_zipped_grib2_to_tiles(

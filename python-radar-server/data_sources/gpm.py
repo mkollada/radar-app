@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 import logging
 import requests
 import re
+import os
+from utils.data_to_tiles import process_tif_to_tiles
 
 class GPMDataSource(DataSource):
     def __init__(self, raw_data_folder, processed_data_folder, 
@@ -14,11 +16,13 @@ class GPMDataSource(DataSource):
         self.n_files = n_files
 
         self.variable_name = 'precip_30mn'
-
-        
+        self.remote_data_loc = 'https://pmmpublisher.pps.eosdis.nasa.gov/products/s3/'
+        self.color_relief_file = './assets/color_reliefs/PrecipRate_color_relief.txt'
+        self.processed_files: List[GeoDataFile] = []
 
     ## TODO
     def fetch_data_files(self) -> List[GeoDataFile]:
+        logging.info('Fetching recent GPM Files...')
         gpm_data_files: List[GeoDataFile] = []
         try:
             today = str(datetime.now().date())
@@ -27,11 +31,11 @@ class GPMDataSource(DataSource):
             query = f'{self.base_url}?q={self.variable_name}&limit={self.n_files}' + \
                 f'&startTime={yesterday}&endTime={today}'
             
-            print(query)
             try:
                 response = requests.get(query)
             except Exception as e:
                 logging.error('Error fetching gpm files:', e, 'With query:', query)
+            
             
             items = response.json()['items']
             for item in items:
@@ -40,6 +44,7 @@ class GPMDataSource(DataSource):
                         url = item['action'][1]['using'][1]['url']
                         file_datetime = self.extract_datetime_from_path(url)
                         geo_data_file = GeoDataFile(remote_path=url,
+                                                    key=url.split(self.remote_data_loc)[1],
                                                     datetime=file_datetime,
                                                     local_path='',
                                                     processed_dir='')
@@ -51,22 +56,81 @@ class GPMDataSource(DataSource):
 
         except Exception as e:
             logging.error('Error fetching gpm files:', e)
+        logging.info('Files fetched.')
         return gpm_data_files
     
     ## TODO
-    def check_if_downloaded(self, recent_files: List[GeoDataFile]):
-        raise NotImplementedError
-    
-    ## TODO
-    def get_download_path():
-        raise NotImplementedError
-    
-    ## TODO
-    def download_files():
-        raise NotImplementedError
-    
-    from datetime import datetime
+    def check_if_downloaded(self, geo_data_files: List[GeoDataFile]) -> List[GeoDataFile]:
+        files_to_download: List[GeoDataFile] = []
+        for file in geo_data_files:
+            processed_dir = self.get_processed_dir(file)
+            if not os.path.exists(processed_dir):
+                files_to_download.append(file)
+            else:
+                logging.info(f'{processed_dir} exists, Skipping download of {file.key}...')
+                # check if file that's been processed is in self.processed_files
+                in_processed_files = False
+                for processed_file in self.processed_files:
+                    if (processed_file.processed_dir == processed_dir):
+                        print('bop')
+                        in_processed_files = True
+                if not in_processed_files:
+                    logging.info(f'{processed_dir} exists, but was not in self.processed_files. adding...')
+                    file.processed_dir = processed_dir
+                    self.processed_files.append(file)
+                
+                
 
+        return files_to_download
+
+    
+    ## TODO
+    def get_download_path(self, file: GeoDataFile) -> str:
+        return os.path.join(self.raw_data_folder,file.key)
+    
+    ## TODO
+    def download_files(self, geo_data_files: List[GeoDataFile]) -> List[GeoDataFile]:
+        downloaded_files: List[GeoDataFile] = []
+        for file in geo_data_files:
+            downloaded_file = self.download_file(file)
+            if downloaded_file:
+                downloaded_files.append(downloaded_file)
+        return downloaded_files
+
+    
+    def download_file(self, geo_data_file: GeoDataFile) -> GeoDataFile | None:
+        # Send a GET request to the URL
+        logging.info(f'Downloading {geo_data_file.remote_path}')
+        response = requests.get(geo_data_file.remote_path)
+
+        download_path = self.get_download_path(geo_data_file)
+        os.makedirs(os.path.dirname(download_path), exist_ok=True)
+        
+        if response.status_code == 200:
+            # Write the content to a file
+            with open(download_path, 'wb') as file:
+                file.write(response.content)
+            logging.info(f"File downloaded successfully: {download_path}")
+            geo_data_file.local_path = download_path
+            logging.info('')
+            return geo_data_file
+        else:
+            logging.error(f"Failed to download file: {response.status_code}")
+        
+            return None
+        
+    def update_data(self) -> List[str]:
+        recent_data_files = self.fetch_data_files()
+        print(recent_data_files)
+        files_to_download = self.check_if_downloaded(recent_data_files)
+        print(files_to_download)
+        downloaded_files = self.download_files(files_to_download)
+        self.process_files(downloaded_files)
+        self.remove_downloaded_files(downloaded_files)
+
+        return self.get_processed_dirs()
+
+        
 
     def extract_datetime_from_path(self, path: str) -> datetime:
         # Define the regex pattern to match the datetime in the path
@@ -97,9 +161,30 @@ class GPMDataSource(DataSource):
     def process_files(self, downloaded_files: List[GeoDataFile]):
         for file in downloaded_files:
             processed_file = self.process_file(file)
-            self.processed_files.append(processed_file)
-        return self.processed_files
+            if processed_file:
+                self.processed_files.append(processed_file)
+    
+    def get_processed_dirs(self):
+        processed_dirs = []
+        for file in self.processed_files:
+            processed_dirs.append(file.processed_dir)
+        return processed_dirs
+    
+    def process_file(self, file: GeoDataFile) -> GeoDataFile | None:
+        logging.info(f'Processing {file.local_path}')
+        processed_dir = self.get_processed_dir(file)
+        try:
+            process_tif_to_tiles(file.local_path, processed_dir, self.color_relief_file)
+            logging.info(f'{file.local_path} processed successfully to tiles.')
+            file.processed_dir = processed_dir
+        except Exception as e:
+            logging.error(f'Error processing GPM tif to tiles for {file.local_path}:', e)
+            return None
+
+        return file
+
     
     ## TODO
-    def get_processed_path(self, file: GeoDataFile):
-        raise NotImplementedError
+    def get_processed_dir(self, file: GeoDataFile) -> str:
+        key_dir = os.path.splitext(file.key)[0]
+        return os.path.join(self.processed_data_folder, key_dir)
