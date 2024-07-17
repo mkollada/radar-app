@@ -12,18 +12,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (site_code) {
     return res.status(400).json({ error: 'data_source parameter is required' });
-  } else if (typeof site_code != 'string') {
-    return res.status(400).json({ error: 'data_source parameter must be a string' });
-  }
+  } 
+
+  console.log(0)
 
   if (!variable_name) {
     return res.status(400).json({ error: 'data_type_name parameter is required' });
-  } else if (typeof variable_name != 'string') {
-    return res.status(400).json({ error: 'data_type_name parameter must be a string' });
-  }
+  } 
+
+  console.log(1)
 
   try {
     const python_update_data_url = python_server_url + site_code + '/' + variable_name
+    console.log(python_update_data_url)
     const response  = await fetch( 
         python_update_data_url
     )

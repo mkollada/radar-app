@@ -36,6 +36,11 @@ const NexradMap = () => {
     return <div>Loading map...</div>;
   }
 
+  const getNexradStationData = async (site_code: string) => {
+    console.log('getting')
+    const response = await fetch(`/api/updateNexradData?site_code=${site_code}&variable_name=reflectivity`)
+  }
+
   return (
     <MapContainer center={[37.8, -96]} zoom={4} style={{ height: '100vh', width: '100%' }}>
       <TileLayer
@@ -49,7 +54,7 @@ const NexradMap = () => {
           eventHandlers={{
             click: () => {
               setSelectedStation(station.id);
-              console.log(station.id)
+              const imageUrl = getNexradStationData(station.id) 
             },
           }}
         >
