@@ -6,6 +6,7 @@ import logging
 import requests
 import re
 import os
+import shutil
 from utils.data_to_tiles import process_tif_to_tiles
 
 class GPMDataSource(DataSource):
@@ -16,11 +17,30 @@ class GPMDataSource(DataSource):
         self.n_files = n_files
 
         self.variable_name = 'precip_30mn'
+        self.processed_variable_data_dir = os.path.join(processed_data_folder, self.variable_name)
         self.remote_data_loc = 'https://pmmpublisher.pps.eosdis.nasa.gov/products/s3/'
         self.color_relief_file = './assets/color_reliefs/PrecipRate_color_relief.txt'
         self.processed_files: List[GeoDataFile] = []
 
-    ## TODO
+
+    def clean_up_processed_files(self):
+        logging.info('Cleaning up processed_files...')
+        self.processed_files.sort()
+        files_to_remove = self.processed_files[self.n_files:]
+        self.processed_files = self.processed_files[:self.n_files]
+        for file in files_to_remove:
+            file.remove_processed_dir()
+        processed_dirs = self.get_processed_dirs()
+        
+        # delete files that shouldn't be there
+        for dir in os.listdir(self.processed_variable_data_dir):
+            check_dir = os.path.join(self.processed_variable_data_dir, dir)
+            if check_dir not in processed_dirs:
+                shutil.rmtree(check_dir)
+                logging.info(f'Removing unnecessary dir: {check_dir}')
+                
+        logging.info('processed_files cleaned.')
+
     def fetch_data_files(self) -> List[GeoDataFile]:
         logging.info('Fetching recent GPM Files...')
         gpm_data_files: List[GeoDataFile] = []
@@ -58,8 +78,7 @@ class GPMDataSource(DataSource):
             logging.error('Error fetching gpm files:', e)
         logging.info('Files fetched.')
         return gpm_data_files
-    
-    ## TODO
+
     def check_if_downloaded(self, geo_data_files: List[GeoDataFile]) -> List[GeoDataFile]:
         files_to_download: List[GeoDataFile] = []
         for file in geo_data_files:
@@ -72,7 +91,6 @@ class GPMDataSource(DataSource):
                 in_processed_files = False
                 for processed_file in self.processed_files:
                     if (processed_file.processed_dir == processed_dir):
-                        print('bop')
                         in_processed_files = True
                 if not in_processed_files:
                     logging.info(f'{processed_dir} exists, but was not in self.processed_files. adding...')
@@ -84,11 +102,9 @@ class GPMDataSource(DataSource):
         return files_to_download
 
     
-    ## TODO
     def get_download_path(self, file: GeoDataFile) -> str:
         return os.path.join(self.raw_data_folder,file.key)
     
-    ## TODO
     def download_files(self, geo_data_files: List[GeoDataFile]) -> List[GeoDataFile]:
         downloaded_files: List[GeoDataFile] = []
         for file in geo_data_files:
@@ -121,12 +137,11 @@ class GPMDataSource(DataSource):
         
     def update_data(self) -> List[str]:
         recent_data_files = self.fetch_data_files()
-        print(recent_data_files)
         files_to_download = self.check_if_downloaded(recent_data_files)
-        print(files_to_download)
         downloaded_files = self.download_files(files_to_download)
         self.process_files(downloaded_files)
         self.remove_downloaded_files(downloaded_files)
+        self.clean_up_processed_files()
 
         return self.get_processed_dirs()
 
@@ -187,4 +202,5 @@ class GPMDataSource(DataSource):
     ## TODO
     def get_processed_dir(self, file: GeoDataFile) -> str:
         key_dir = os.path.splitext(file.key)[0]
-        return os.path.join(self.processed_data_folder, key_dir)
+        file_dir = key_dir.split('/')[-1]
+        return os.path.join(self.processed_variable_data_dir, file_dir)
