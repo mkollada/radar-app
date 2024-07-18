@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import styles from '../styles/Home.module.css'; // Importing the CSS module for styling
 
-import { USMap, GlobalMap } from '@/components/TileMap';
 import { GlobalLoopingTileMap, USLoopingTileMap } from '@/components/LoopingTileMap';
 import NexradMap from '@/components/NexradMap';
 
