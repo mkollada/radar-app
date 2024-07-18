@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
+import { useMapEvents } from 'react-leaflet';
 
 // Dynamically import components from react-leaflet
 const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
@@ -8,10 +9,19 @@ const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLaye
 const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
 const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
 
+const MapClickHandler = ({ onClick }: { onClick: () => void }) => {
+  useMapEvents({
+    click: onClick,
+  });
+  return null;
+};
+
 const NexradMap = () => {
   const [leaflet, setLeaflet] = useState<any>(null);
   const [stations, setStations] = useState<any[]>([]);
-  const [selectedStation, setSelectedStation] = useState<null|string>(null)
+  const [selectedStation, setSelectedStation] = useState<null|string>(null);
+  const [overlayImage, setOverlayImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     // Ensure this code runs only on the client side
@@ -32,12 +42,38 @@ const NexradMap = () => {
       .catch(error => console.error('Error fetching the NEXRAD stations:', error));
   }, []);
 
+  const handleMarkerClick = (stationId: string) => {
+    setSelectedStation(stationId);
+    setLoading(true);
+    console.log(stationId);
+    fetch(`/api/updateNexradData?site_code=${stationId}&variable_name=reflectivity`)
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        const imageUrl = data.imageUrl; // Update this with the correct key from your response
+        console.log(imageUrl);
+        console.log('---------');
+        setOverlayImage('/nexrad/' + imageUrl);
+        setLoading(false);
+      })
+      .catch(error => {
+        console.error('Error fetching the update data:', error);
+        setLoading(false);
+      });
+  };
+
+  const handleMapClick = () => {
+    setOverlayImage(null);
+    setSelectedStation(null);
+  };
+
   if (!leaflet) {
     return <div>Loading map...</div>;
   }
 
   return (
     <MapContainer center={[37.8, -96]} zoom={4} style={{ height: '100vh', width: '100%' }}>
+      <MapClickHandler onClick={handleMapClick} />
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -47,9 +83,9 @@ const NexradMap = () => {
           key={station.id}
           position={[station.latitude, station.longitude]}
           eventHandlers={{
-            click: () => {
-              setSelectedStation(station.id);
-              console.log(station.id)
+            click: (e) => {
+              e.originalEvent.stopPropagation();
+              handleMarkerClick(station.id);
             },
           }}
         >
@@ -61,11 +97,13 @@ const NexradMap = () => {
       ))}
       {selectedStation && (
         <div className="overlay" onClick={() => setSelectedStation(null)}>
-          <img 
-            src={`/nexrad/reflectivity/2024/07/07/KTLX/KTLX20240707_181413_V06.png`} 
-            alt={selectedStation} 
-            className="overlay-image"
-          />
+          {loading ? (
+            <div className="loading">
+              <div className="spinner"></div> Loading...
+            </div>
+          ) : (
+            overlayImage && <img src={overlayImage} alt={selectedStation} className="overlay-image" />
+          )}
         </div>
       )}
       <style jsx>{`
@@ -85,6 +123,28 @@ const NexradMap = () => {
         .overlay-image {
           max-width: 100%;
           max-height: 100%;
+        }
+
+        .loading {
+          color: white;
+          font-size: 1.5em;
+          display: flex;
+          align-items: center;
+        }
+
+        .spinner {
+          border: 4px solid rgba(255, 255, 255, 0.3);
+          border-top: 4px solid white;
+          border-radius: 50%;
+          width: 24px;
+          height: 24px;
+          animation: spin 1s linear infinite;
+          margin-right: 8px;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
       `}</style>
     </MapContainer>

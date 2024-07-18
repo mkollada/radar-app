@@ -125,6 +125,8 @@ class NexradDataSource(DataSource):
             )
             os.makedirs(output_dir, exist_ok=True)
             plt.savefig(output_path)
+            file.processed_dir = output_dir
+            file.processed_path = output_path
         else:
             print(f'{output_path} exists. Skipping generation...')
             file.processed_dir = output_dir
@@ -148,8 +150,9 @@ class NexradDataSource(DataSource):
             files_to_download.append(use_file)
             downloaded_files = self.download_files(files_to_download)
             processed_files = self.process_files(downloaded_files)
+            print('Processed files array:', processed_files)
             self.remove_downloaded_files(downloaded_files)
-            return processed_files[0].processed_path
+            return processed_files[-1].processed_path
         else:
             print(f'{processed_path} exists, Skipping download of {use_file.scan.awspath}...')
             return processed_path

@@ -96,9 +96,13 @@ def updateData():
     
 @app.route('/update-nexrad-site/<path:site_code>/<path:variable_name>', methods=['GET'])
 def updateNexradSite(site_code: str, variable_name: str):
-    processed_file = nexrad_data_source.download_data(site_code=site_code, variable_name=variable_name)
-
-    return jsonify({'processed_file':processed_file}), 200
+    try:
+        processed_file = nexrad_data_source.update_data(site_code=site_code, variable_name=variable_name)
+        processed_file_radar_app_loc = os.path.join(*processed_file.split('/')[4:])
+        return jsonify({'imageUrl':processed_file_radar_app_loc}), 200
+    except Exception as e:
+        logging.error(f"Error in /nexrad-update-date route: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':
