@@ -55,20 +55,20 @@ const Home: React.FC = () => {
   };
 
   // Setting timers for updating each of the data types
-  // useEffect(() => {
-  //   updateGPMData()
-  //   updateData()
+  useEffect(() => {
+    updateGPMData()
+    updateData()
 
-  //   const updateInterval = setInterval(() => {
-  //     updateData();
-  //   }, 120000); // 2 minutes
+    const updateInterval = setInterval(() => {
+      updateData();
+    }, 120000); // 2 minutes
 
-  //   const gpmUpdateInterval = setInterval(() => {
-  //     updateGPMData()
-  //   }, 1800000)
+    const gpmUpdateInterval = setInterval(() => {
+      updateGPMData()
+    }, 1800000)
 
-  //   return () => clearInterval(updateInterval);
-  // }, []);
+    return () => clearInterval(updateInterval);
+  }, []);
 
   const renderMap = () => {
     switch (mapType) {
