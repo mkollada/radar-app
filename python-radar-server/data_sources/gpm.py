@@ -163,10 +163,6 @@ class GPMDataSource(DataSource):
             raise ValueError("No valid datetime found in the provided path.")
 
     
-    ## TODO 
-    def download_data(self):
-        return super().download_data()
-    
     def remove_downloaded_files(self, downloaded_files: List[GeoDataFile]):
         return super().remove_downloaded_files(downloaded_files)
     

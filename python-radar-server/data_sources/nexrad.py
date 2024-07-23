@@ -84,9 +84,6 @@ class NexradDataSource(DataSource):
     
     def extract_datetime_from_path(self, path: str):
         return super().extract_datetime_from_path(path)
-    
-    # def download_data(self):
-    #     return super().download_data()
 
     def remove_downloaded_files(self, downloaded_files: List[NexradGeoDataFile]):
         return super().remove_downloaded_files(downloaded_files)
@@ -164,8 +161,6 @@ class NexradDataSource(DataSource):
             print(f'{processed_path} exists, Skipping download of {use_file.scan.awspath}...')
             return processed_path
         
-    def download_data(self):
-        return super().download_data()
 
 
         

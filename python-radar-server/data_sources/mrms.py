@@ -160,8 +160,30 @@ class MRMSDataSource(DataSource):
 
 
 
-    def download_files(self, files_to_download: List[GeoDataFile]):
-        return super().download_files(files_to_download)
+    def download_file(self, url, save_dir, filename, data_type):
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        
+        file_path = os.path.join(save_dir, filename)
+        if not os.path.exists(file_path):
+            response = requests.get(url, stream=True)
+            if response.status_code == 200:
+                total_size = int(response.headers.get('content-length', 0))
+                with open(file_path, 'wb') as f, tqdm(
+                    desc=filename,
+                    total=total_size,
+                    unit='iB',
+                    unit_scale=True,
+                    unit_divisor=1024,
+                ) as bar:
+                    for chunk in response.iter_content(chunk_size=1024):
+                        size = f.write(chunk)
+                        bar.update(size)
+                
+            else:
+                raise Exception(f"Failed to download file: {url}")
+
+        return file_path
 
 
 
