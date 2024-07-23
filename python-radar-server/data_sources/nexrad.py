@@ -9,6 +9,7 @@ from typing import List
 import os
 import pyart
 import cartopy.crs as ccrs
+import cartopy.feature as cfeature
 import matplotlib.pyplot as plt
 
 class NexradDataSource(DataSource):
@@ -108,10 +109,10 @@ class NexradDataSource(DataSource):
             print(f'{output_path} does not exist, generating...')
         
             radar = pyart.io.read_nexrad_archive(file.local_path)
-            fig = plt.figure(figsize=(12, 4))
+            fig = plt.figure(figsize=(8, 6))
             display = pyart.graph.RadarMapDisplay(radar,)
 
-            ax = plt.subplot(121, projection=ccrs.PlateCarree())
+            ax = plt.subplot(111, projection=ccrs.PlateCarree())
 
             display.plot_ppi_map(
                 variable_name,
@@ -123,6 +124,12 @@ class NexradDataSource(DataSource):
                 lat_lines=[],
                 lon_lines=[]
             )
+
+            # Add coastlines and borders
+            # ax.add_feature(cfeature.COASTLINE)
+            ax.add_feature(cfeature.BORDERS, linestyle=':')
+            ax.add_feature(cfeature.STATES, linestyle=':', edgecolor='gray')
+
             os.makedirs(output_dir, exist_ok=True)
             plt.savefig(output_path)
             file.processed_dir = output_dir
