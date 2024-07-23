@@ -5,6 +5,7 @@ import requests
 from tqdm import tqdm
 from classes import DataType, GeoDataFile
 from typing import List
+import logging
 
 
 class DataSource(abc.ABC):
@@ -23,13 +24,37 @@ class DataSource(abc.ABC):
     @abc.abstractmethod
     def fetch_data_files(self, data_type: DataType):
         raise NotImplementedError
-
+    
+    def get_download_path(self, file: GeoDataFile) -> str:
+        return os.path.join(self.raw_data_folder,file.key)
+    
+    @abc.abstractmethod
+    def get_processed_dir(self, file: GeoDataFile) -> str:
+        raise NotImplementedError
+    
     '''
     Returns files_to_download: List[GeoDataFile]
     '''
-    @abc.abstractmethod
-    def check_if_downloaded(self, recent_files: List[GeoDataFile]):
-        raise NotImplementedError
+    def check_if_downloaded(self, geo_data_files: List[GeoDataFile]) -> List[GeoDataFile]:
+        files_to_download: List[GeoDataFile] = []
+        for file in geo_data_files:
+            processed_dir = self.get_processed_dir(file)
+            if not os.path.exists(processed_dir):
+                files_to_download.append(file)
+            else:
+                logging.info(f'{processed_dir} exists, Skipping download of {file.key}...')
+                # check if file that's been processed is in self.processed_files
+                in_processed_files = False
+                for processed_file in self.processed_files:
+                    if (processed_file.processed_dir == processed_dir):
+                        in_processed_files = True
+                if not in_processed_files:
+                    logging.info(f'{processed_dir} exists, but was not in self.processed_files. adding...')
+                    file.processed_dir = processed_dir
+                    self.processed_files.append(file)
+        return files_to_download
+
+    
 
     
     '''
@@ -50,36 +75,6 @@ class DataSource(abc.ABC):
         for file in downloaded_files:
             file.remove_local_file()
 
-    ### steps
-    # - create list of processed files - init_processed_files()
-    # - get paths of n most recent files - fetch_data_paths()
-    # - check for overlap and figure out which to be downloaded
-    #   - TODO: make a function that just compares processed files with recent file links
-    # - delete old files - clean_up_processed_files()
-    # - download new files - download_files()
-    # - process them and put in public dir of radar app - process_file()
-    # -
-    @abc.abstractmethod
-    def download_data(self):
-        for data_type in self.data_types:
-            recent_files = self.fetch_data_paths(data_type)
-            # TODO
-            files_to_download = self.check_if_downloaded(recent_files)
-            # TODO
-            downloaded_files = self.download_files(recent_files)
-            # TODO (this should remove downloaded files and clean up processed files)
-            processed_files = self.process_files(downloaded_files)
-
-            self.remove_downloaded_files(downloaded_files)
-            self.clean_up_processed_files()
-
-            # data_type_dir = os.path.join(self.raw_data_folder, data_type.name)
-            # processed_data_type_dir = os.path.join(self.processed_data_folder, data_type.name)
-        
-    
-    @abc.abstractmethod
-    def extract_datetime_from_path(self, path):
-        raise NotImplementedError
 
     def init_processed_files(self):
         processed_files = {}
@@ -117,29 +112,43 @@ class DataSource(abc.ABC):
                 print(f"Deleted old dir: {dir}")
                 self.processed_files[data_type.name].remove(dir)
 
-    def download_file(self, url, save_dir, filename, data_type):
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-        
-        file_path = os.path.join(save_dir, filename)
-        if not os.path.exists(file_path):
-            response = requests.get(url, stream=True)
-            if response.status_code == 200:
-                total_size = int(response.headers.get('content-length', 0))
-                with open(file_path, 'wb') as f, tqdm(
-                    desc=filename,
-                    total=total_size,
-                    unit='iB',
-                    unit_scale=True,
-                    unit_divisor=1024,
-                ) as bar:
-                    for chunk in response.iter_content(chunk_size=1024):
-                        size = f.write(chunk)
-                        bar.update(size)
-                
-            else:
-                raise Exception(f"Failed to download file: {url}")
+    def download_files(self, geo_data_files: List[GeoDataFile]) -> List[GeoDataFile]:
+        downloaded_files: List[GeoDataFile] = []
+        for file in geo_data_files:
+            downloaded_file = self.download_file(file)
+            if downloaded_file:
+                downloaded_files.append(downloaded_file)
+        return downloaded_files
+    
+    def process_files(self, downloaded_files: List[GeoDataFile]):
+        for file in downloaded_files:
+            processed_file = self.process_file(file)
+            if processed_file:
+                self.processed_files.append(processed_file)
 
-        return file_path
+    # def download_file(self, url, save_dir, filename, data_type):
+    #     if not os.path.exists(save_dir):
+    #         os.makedirs(save_dir)
+        
+    #     file_path = os.path.join(save_dir, filename)
+    #     if not os.path.exists(file_path):
+    #         response = requests.get(url, stream=True)
+    #         if response.status_code == 200:
+    #             total_size = int(response.headers.get('content-length', 0))
+    #             with open(file_path, 'wb') as f, tqdm(
+    #                 desc=filename,
+    #                 total=total_size,
+    #                 unit='iB',
+    #                 unit_scale=True,
+    #                 unit_divisor=1024,
+    #             ) as bar:
+    #                 for chunk in response.iter_content(chunk_size=1024):
+    #                     size = f.write(chunk)
+    #                     bar.update(size)
+                
+    #         else:
+    #             raise Exception(f"Failed to download file: {url}")
+
+    #     return file_path
     
     

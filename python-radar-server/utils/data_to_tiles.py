@@ -16,6 +16,14 @@ def read_netcdf(netcdf_file, variable_name):
 
     # Convert to xarray Dataset
     ds = xr.open_dataset(xr.backends.NetCDF4DataStore(nc_file))
+
+    if 'lon' in ds:
+        ds = ds.rename_vars({'lon':'longitude'})
+
+    if 'lat' in ds:
+        ds = ds.rename_vars({'lat':'latitude'})
+        
+    
     data = ds[variable_name]
     if 'time' in data.dims:
         data = data.isel(time=0)
@@ -42,9 +50,28 @@ def clip_latitude(data):
 
 def convert_to_geotiff(data, output_tif):
     print("Converting to GeoTIFF...")
+    
+    if len(data.longitude.shape) == 2:
+        long0 = data.longitude[0][1]
+        long1 = data.longitude[0][2]
+    elif len(data.longitude.shape) == 1:
+        long0 = data.longitude[0]
+        long1 = data.longitude[1]
+
+    long_val = np.abs(long1 - long0).values
+
+    if len(data.longitude.shape) == 2:
+        lat0 = data.latitude[0][0]
+        lat1 = data.latitude[1][0]
+    elif len(data.longitude.shape) == 1:
+        lat0 = data.latitude[0]
+        lat1 = data.latitude[1]
+
+    lat_val = np.abs(lat1 - lat0).values
+
     transform = from_origin(data.longitude.min().values, data.latitude.max().values, 
-                            np.abs(data.longitude[1] - data.longitude[0]).values, 
-                            np.abs(data.latitude[1] - data.latitude[0]).values)
+                            long_val, 
+                            lat_val)
 
     if data.units == 'K':
         data.values = data.values - 273.15  # Example conversion if the data is in Kelvin
@@ -131,7 +158,8 @@ def process_netcdf_to_tiles(
         variable_name, 
         output_tiles, 
         color_relief_file, 
-        target_crs='EPSG:3857'
+        target_crs='EPSG:3857',
+        remove=True
 ):
     
     base_temp_file_name = os.path.splitext(os.path.basename(netcdf_file))[0]
@@ -148,7 +176,8 @@ def process_netcdf_to_tiles(
     convert_to_8bit(output_colored_tif, output_8bit_tif)
     reproject_geotiff(output_8bit_tif, reprojected_tif, target_crs)
     generate_tiles(reprojected_tif, output_tiles, profile='mercator')
-    remove_intermediate_files([output_tif, output_8bit_tif, reprojected_tif, output_colored_tif, 'temp.vrt'])
+    if remove:
+        remove_intermediate_files([output_tif, output_8bit_tif, reprojected_tif, output_colored_tif, 'temp.vrt'])
 
 def process_grib2_to_tiles(
         grib_file, 
