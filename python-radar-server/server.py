@@ -28,11 +28,6 @@ mrms_data_source = MRMSDataSource(
             name='PrecipRate', 
             variable_name='unknown',
             type_of_level=None,
-        ),
-        MRMSDataType(
-            name='SeamlessHSR', 
-            variable_name='unknown',
-            type_of_level=None,
         )
     ],
     n_files=5
