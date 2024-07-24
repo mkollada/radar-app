@@ -55,15 +55,6 @@ class DataSource(abc.ABC):
         return files_to_download
 
     
-
-    
-    '''
-    Returns downloaded_files: List[GeoDataFile]
-    '''
-    @abc.abstractmethod
-    def download_files(self, files_to_download: List[GeoDataFile]):
-        raise NotImplementedError
-    
     '''
     Returns processed_files: List[GeoDataFile]
     '''
@@ -88,6 +79,15 @@ class DataSource(abc.ABC):
                 processed_files[data_type.name] = []
 
         return processed_files
+    
+    def update_data(self) -> List[str]:
+        recent_data_files = self.fetch_data_files()
+        files_to_download = self.check_if_downloaded(recent_data_files)
+        downloaded_files = self.download_files(files_to_download)
+        self.process_files(downloaded_files)
+        self.remove_downloaded_files(downloaded_files)
+
+        return self.get_processed_dirs()
     
     
     def clean_up_processed_files(self):
@@ -124,7 +124,8 @@ class DataSource(abc.ABC):
         for file in downloaded_files:
             processed_file = self.process_file(file)
             if processed_file:
-                self.processed_files.append(processed_file)
+                if processed_file not in self.processed_files:
+                    self.processed_files.append(processed_file)
 
     # def download_file(self, url, save_dir, filename, data_type):
     #     if not os.path.exists(save_dir):

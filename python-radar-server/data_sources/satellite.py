@@ -80,7 +80,7 @@ class SatDataSource(DataSource):
     def check_if_downloaded(self, recent_files: List[GeoDataFile]):
         return super().check_if_downloaded(recent_files)
     
-    def download_file(self, geo_data_file: GeoDataFile) -> GeoDataFile:
+    def download_file(self, geo_data_file: GeoDataFile) -> GeoDataFile | None:
         if not os.path.exists(self.processed_data_folder):
             os.makedirs(self.processed_data_folder)
 
@@ -90,10 +90,12 @@ class SatDataSource(DataSource):
         os.makedirs(os.path.dirname(download_path), exist_ok=True)
 
         logging.info(f'Downloading {geo_data_file.remote_path} to {download_path}')
-
-        # Download the file from S3
-        self.s3_client.download_file(self.bucket, geo_data_file.remote_path, download_path)
-
+        try:
+            # Download the file from S3
+            self.s3_client.download_file(self.bucket, geo_data_file.remote_path, download_path)
+        except Exception as e:
+            logging.error(f'Error downloading: {geo_data_file.remote_path}')
+            return None
         logging.info(f'Download complete: {download_path}')
 
         # Update the geo_data_file with the local path
