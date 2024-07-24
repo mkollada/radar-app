@@ -19,7 +19,7 @@ class GPMDataSource(DataSource):
         self.variable_name = 'precip_30mn'
         self.processed_variable_data_dir = os.path.join(processed_data_folder, self.variable_name)
         self.remote_data_loc = 'https://pmmpublisher.pps.eosdis.nasa.gov/products/s3/'
-        self.color_relief_file = './assets/color_reliefs/PrecipRate_color_relief.txt'
+        self.color_relief_file = './assets/color_reliefs/GPM_color_relief.txt'
         self.processed_files: List[GeoDataFile] = []
 
 

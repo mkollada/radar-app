@@ -1,0 +1,9 @@
+# Precipitation Rate (mm/hr)    Red     Green   Blue    Alpha
+0.0                             0       0       0       0     # Transparent
+0.1                             144     238     144     255   # Light Green for very light rain
+2.5                             0       100     0       255   # Dark Green for light rain
+5.0                             255     255     0       255   # Yellow for moderate rain
+10.0                            255     165     0       255   # Orange for heavy rain
+20.0                            255     0       0       255   # Red for very heavy rain
+50.0                            128     0       128     255   # Purple for intense rain
+100.0                           75      0       130     255   # Dark Purple for extreme rain
