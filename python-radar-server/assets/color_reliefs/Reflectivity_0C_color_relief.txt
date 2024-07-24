@@ -1,0 +1,8 @@
+# Reflectivity (dBZ)            Red     Green   Blue    Alpha
+0.0                             0       0       0       0     # Transparent for no reflectivity
+10.0                            144     238     144     255   # Light green for low reflectivity
+20.0                            0       100     0       255   # Dark green for moderate reflectivity
+30.0                            255     255     0       255   # Yellow for higher reflectivity
+40.0                            255     165     0       255   # Orange for intense reflectivity
+50.0                            255     0       0       255   # Red for very intense reflectivity
+65.0                            139     0       139     255   # Dark magenta for extreme rain or hail

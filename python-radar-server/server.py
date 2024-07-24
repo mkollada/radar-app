@@ -25,7 +25,7 @@ mrms_data_source = MRMSDataSource(
     processed_data_folder=os.path.join(next_tiles_dir,'mrms'),
     data_types=[
         MRMSDataType(
-            name='PrecipRate', 
+            name='Reflectivity_0C', 
             variable_name='unknown',
             type_of_level=None,
         )

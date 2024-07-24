@@ -25,7 +25,7 @@ class MRMSDataSource(DataSource):
             processed_data_folder='./data/mrms/processed',
             data_types=[
                 MRMSDataType(
-                    name='PrecipRate', 
+                    name='MergedBaseReflectivity', 
                     variable_name='unknown',
                     type_of_level=None,
                 )
@@ -146,11 +146,11 @@ class MRMSDataSource(DataSource):
 
         return self.processed_files
             
-    def process_data(self):
-        return super().process_data()
+    # def process_data(self):
+    #     return super().process_data()
     
-    def get_processed_data(self):
-        return super().get_processed_data()
+    # def get_processed_data(self):
+    #     return super().get_processed_data()
     
     
 
@@ -158,7 +158,10 @@ class MRMSDataSource(DataSource):
         return super().check_if_downloaded(recent_files)
 
 
-
+    def get_processed_dir(self, file: GeoDataFile) -> str:
+        key_dir = os.path.splitext(file.key)[0]
+        file_dir = file.key.split('/')[-1]
+        return os.path.join(self.processed_variable_data_dir, file_dir)
 
     def download_file(self, url, save_dir, filename, data_type):
         if not os.path.exists(save_dir):
