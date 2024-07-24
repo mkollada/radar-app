@@ -143,6 +143,9 @@ class NexradDataSource(DataSource):
         output_path = os.path.join(output_dir, f'{file.scan.filename}.png')
         return output_path
     
+    def get_processed_dir(self, file: GeoDataFile) -> str:
+        return super().get_processed_dir(file)
+    
     def update_data(self, site_code: str, variable_name: str) -> str:
         recent_data_files = self.fetch_data_files(site_code=site_code)
         use_file = recent_data_files[-1]
