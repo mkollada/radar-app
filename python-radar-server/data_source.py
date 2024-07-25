@@ -7,18 +7,39 @@ import logging
 
 
 class DataSource(abc.ABC):
-    def __init__(self, raw_data_folder, processed_data_folder, data_types, base_url):
+    def __init__(self, raw_data_folder, processed_data_folder, base_url):
         self.raw_data_folder = raw_data_folder
         self.processed_data_folder = processed_data_folder
-        self.data_types = data_types
         self.base_url = base_url
         if not os.path.exists(raw_data_folder):
             os.makedirs(raw_data_folder)
         if not os.path.exists(processed_data_folder):
             os.makedirs(processed_data_folder)
-    '''
-    returns List of GeoDataFiles
-    '''
+
+    abc.abstractmethod
+    def extract_datetime_from_name(self, name: str):
+        raise NotImplementedError
+
+    # Creates geo_data_files for all dirs in self.processed_data_folder
+    def init_processed_files(self):
+        os.makedirs(self.processed_variable_data_dir, exist_ok=True)
+        logging.info('Initializing processed_files...')
+        for dir in os.listdir(self.processed_variable_data_dir):
+            datetime = self.extract_datetime_from_name(dir)
+            geo_data_file = GeoDataFile(
+                datetime=datetime,
+                remote_path='',
+                local_path='',
+                processed_dir=os.path.join(
+                    self.processed_variable_data_dir,
+                    dir 
+                ),
+                key=dir
+            )
+
+            self.processed_files.append(geo_data_file)
+        logging.info('processed_files initialized.')
+
     @abc.abstractmethod
     def fetch_data_files(self, data_type: DataType):
         raise NotImplementedError
@@ -71,11 +92,6 @@ class DataSource(abc.ABC):
         self.clean_up_processed_files()
 
         return self.get_processed_dirs()
-    
-    # Creates geo_data_files for all dirs in self.processed_data_folder
-    @abc.abstractmethod
-    def init_processed_files(self):
-        raise NotImplementedError
     
     def clean_up_processed_files(self):
         logging.info('Cleaning up processed_files...')

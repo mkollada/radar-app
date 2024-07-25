@@ -3,10 +3,7 @@ from classes import GeoDataFile
 from data_source import DataSource
 from datetime import datetime, timedelta, timezone
 import logging
-import requests
-import re
 import os
-import shutil
 from utils.data_to_tiles import process_grib2_to_tiles, process_netcdf_to_tiles
 import boto3
 from botocore import UNSIGNED
@@ -26,12 +23,27 @@ class SatDataSource(DataSource):
 
         self.color_relief_file = './assets/color_reliefs/PrecipRate_color_relief.txt'
 
-        self.processed_files: List[GeoDataFile] = []
+        
 
         self.processed_variable_data_dir = os.path.join(
             self.processed_data_folder,
             self.variable_name
         )
+
+        self.processed_files: List[GeoDataFile] = []
+        self.init_processed_files()
+        self.clean_up_processed_files()
+
+    def extract_datetime_from_name(self, name: str):
+        # Assuming the filename format is fixed: GLOBCOMPSIR_nc.YYYYMMDDHH
+        try:
+            datetime_str = name.split('_')[1].split('.')[1]  # Split and get the date part
+            extracted_datetime = datetime.strptime(datetime_str, "%Y%m%d%H")
+            return extracted_datetime
+        except (IndexError, ValueError) as e:
+            print(f"Error parsing datetime from filename: {e}")
+            return None
+
 
     def fetch_data_files(self) -> List[GeoDataFile]:
         logging.info('Fetching recent Satellite image files')
@@ -61,24 +73,6 @@ class SatDataSource(DataSource):
             logging.error('Did not successfully fetch any satellite image files.')
         
         return sat_data_files
-    
-    def get_download_path(self, file: GeoDataFile) -> str:
-        return super().get_download_path(file)
-    
-    ## TODO
-    def get_processed_dir(self, file: GeoDataFile) -> str:
-        key_dir = os.path.splitext(file.key)[0]
-        file_dir = file.key.split('/')[-1]
-        return os.path.join(self.processed_variable_data_dir, file_dir)
-    
-    def get_processed_dirs(self) -> List[str]:
-        processed_dirs = []
-        for file in self.processed_files:
-            processed_dirs.append(file.processed_dir)
-        return processed_dirs
-    
-    def check_if_downloaded(self, recent_files: List[GeoDataFile]):
-        return super().check_if_downloaded(recent_files)
     
     def download_file(self, geo_data_file: GeoDataFile) -> GeoDataFile | None:
         if not os.path.exists(self.processed_data_folder):
@@ -120,21 +114,7 @@ class SatDataSource(DataSource):
             return None
         
         return file
-
-    def process_files(self, downloaded_files: List[GeoDataFile]):
-        return super().process_files(downloaded_files)
     
-    def remove_downloaded_files(self, downloaded_files: List[GeoDataFile]):
-        return super().remove_downloaded_files(downloaded_files)
-
-    def update_data(self) -> List[str]:
-        recent_data_files = self.fetch_data_files()
-        files_to_download = self.check_if_downloaded(recent_data_files)
-        downloaded_files = self.download_files(files_to_download)
-        self.process_files(downloaded_files)
-        self.remove_downloaded_files(downloaded_files)
-
-        return self.get_processed_dirs()
 
 def get_recent_sat_mosaic_files(s3_client, bucket, variable_name, n_files=1, delta=timedelta(days=1)):
     end_time = datetime.now(timezone.utc)

@@ -12,13 +12,6 @@ from classes import GeoDataFile
 from data_source import DataSource
 from utils.data_to_tiles import process_zipped_grib2_to_tiles
 
-class MRMSDataType():
-    def __init__(self, name, variable_name, type_of_level):
-        self.name = name
-        self.variable_name = variable_name
-        self.color_relief_file = f'./assets/color_reliefs/{name}_color_relief.txt'
-        self.type_of_level = type_of_level
-
 class MRMSDataSource(DataSource):
     def __init__(
             self, 
@@ -28,7 +21,6 @@ class MRMSDataSource(DataSource):
             base_url='https://mrms.ncep.noaa.gov/data/2D/'
         ):
         super().__init__(raw_data_folder, processed_data_folder, None, base_url)
-        # self.data_types = data_types
         self.processed_data_folder = processed_data_folder
         self.raw_data_folder = raw_data_folder
         self.n_files = n_files
@@ -48,7 +40,7 @@ class MRMSDataSource(DataSource):
         
         logging.info('Initializing processed_files...')
         for dir in os.listdir(self.processed_variable_data_dir):
-            datetime = self.extract_datetime(dir)
+            datetime = self.extract_datetime_from_name(dir)
             geo_data_file = GeoDataFile(
                 datetime=datetime,
                 remote_path='',
@@ -63,7 +55,7 @@ class MRMSDataSource(DataSource):
             self.processed_files.append(geo_data_file)
         logging.info('processed_files initialized.')
     
-    def extract_datetime(self, name: str):
+    def extract_datetime_from_name(self, name: str):
         try:
             parts = name.split('_')
             date_part = parts[-1].split('.')[0]
