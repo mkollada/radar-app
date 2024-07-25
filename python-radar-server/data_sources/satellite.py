@@ -16,7 +16,7 @@ class SatDataSource(DataSource):
         self.raw_data_folder = raw_data_folder
         self.processed_data_folder = processed_data_folder
         
-        self.variable_name = 'GMGSI_SW'
+        self.variable_name = 'GMGSI_VIS'
         self.s3_client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
         self.n_files = n_files
         self.bucket = 'noaa-gmgsi-pds'
@@ -100,8 +100,9 @@ class SatDataSource(DataSource):
     def process_file(self, file: GeoDataFile) -> GeoDataFile | None:
         logging.info(f'Processing {file.local_path}')
         processed_dir = self.get_processed_dir(file)
+        os.makedirs(processed_dir, exist_ok=True)
         try:
-            process_netcdf_to_tiles(
+            success = process_netcdf_to_tiles(
                 file.local_path,
                 'data',
                 processed_dir,
@@ -109,6 +110,9 @@ class SatDataSource(DataSource):
             )
             logging.info(f'{file.local_path} processed successfully to tiles.')
             file.processed_dir = processed_dir
+            if not success:
+                file.remove_processed_dir()
+                return None
         except Exception as e:
             logging.error(f'Error processing satellite netcdf to tiles for {file.local_path}:', e)
             return None

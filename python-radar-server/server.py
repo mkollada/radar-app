@@ -3,9 +3,10 @@ from flask_cors import CORS
 import os
 import logging
 
-from data_sources.mrms import MRMSDataSource, MRMSDataType
+from data_sources.mrms import MRMSDataSource
 from data_sources.nexrad import NexradDataSource
 from data_sources.gpm import GPMDataSource
+from data_sources.satellite import SatDataSource
 
 
 app = Flask(__name__)
@@ -19,23 +20,31 @@ next_tiles_dir = os.path.join(next_app_public_dir,'tiles')
 
 
 
-# Initialize data sources
+### Initialize data sources
+# MRMS
 mrms_data_source = MRMSDataSource( 
     raw_data_folder=os.path.join(local_data_folder,'raw','mrms'),
     processed_data_folder=os.path.join(next_tiles_dir,'mrms'),
     n_files=20
 )
+# NEXRAD
+nexrad_data_source = NexradDataSource(
+    raw_data_folder='./data/nexrad/raw/', 
+    processed_data_folder='../radar-app/public/nexrad', 
+)
 
-# data_sources = {}
-# data_sources['mrms'] = mrms_data_source
-
-nexrad_data_source = NexradDataSource(raw_data_folder='./data/nexrad/raw/', processed_data_folder='../radar-app/public/nexrad', data_types=None)
-
-# Create GPM Data Source
+# GPM
 gpm_data_source = GPMDataSource(
     raw_data_folder='./data/raw/gpm/', 
     processed_data_folder='../radar-app/public/tiles/gpm/',
     n_files=5
+)
+
+# Satellite
+sat_data_source = SatDataSource(
+    raw_data_folder='./data/raw/satellite/',
+    processed_data_folder='../radar-app/public/tiles/satellite',
+    n_files=6
 )
 
 @app.route('/')
@@ -60,8 +69,19 @@ def updateGPMData():
 def updateMRMSData():
     try:
         processed_dirs = mrms_data_source.update_data()
-        print('PROCESSED DIRS --------')
-        print(processed_dirs)
+        radar_app_dirs = []
+        for dir in processed_dirs:
+            radar_app_dir = os.path.join(*dir.split('/')[4:])
+            radar_app_dirs.append(radar_app_dir)
+        return jsonify({"directories":radar_app_dirs}), 200
+    except Exception as e:
+        logging.error(f"Error: {e}")
+        return jsonify({"error": str(e)}), 500 
+    
+@app.route('/update-satellite-data', methods=['GET'])
+def updateSatelliteData():
+    try:
+        processed_dirs = sat_data_source.update_data()
         radar_app_dirs = []
         for dir in processed_dirs:
             radar_app_dir = os.path.join(*dir.split('/')[4:])
