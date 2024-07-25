@@ -20,7 +20,7 @@ class MRMSDataSource(DataSource):
             n_files=4,
             base_url='https://mrms.ncep.noaa.gov/data/2D/'
         ):
-        super().__init__(raw_data_folder, processed_data_folder, None, base_url)
+        super().__init__(raw_data_folder, processed_data_folder, base_url)
         self.processed_data_folder = processed_data_folder
         self.raw_data_folder = raw_data_folder
         self.n_files = n_files

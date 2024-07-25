@@ -13,7 +13,7 @@ class GPMDataSource(DataSource):
     def __init__(self, raw_data_folder, processed_data_folder, 
                  base_url='https://pmmpublisher.pps.eosdis.nasa.gov/opensearch', 
                  n_files=1):
-        super().__init__(raw_data_folder, processed_data_folder, None, base_url)
+        super().__init__(raw_data_folder, processed_data_folder, base_url)
         self.n_files = n_files
 
         self.variable_name = 'precip_30mn'

@@ -13,8 +13,8 @@ import cartopy.feature as cfeature
 import matplotlib.pyplot as plt
 
 class NexradDataSource(DataSource):
-    def __init__(self, raw_data_folder, processed_data_folder, data_types,):
-        super().__init__(raw_data_folder, processed_data_folder, data_types, None)
+    def __init__(self, raw_data_folder, processed_data_folder):
+        super().__init__(raw_data_folder, processed_data_folder, None)
 
         self.nexrad_interface = nexradaws.NexradAwsInterface()
         self.processed_files: List[NexradGeoDataFile] = []
