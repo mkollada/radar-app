@@ -36,7 +36,7 @@ class GeoDataFile:
     def remove_processed_dir(self):
         if self.processed_dir and os.path.exists(self.processed_dir):
             shutil.rmtree(self.processed_dir)
-            logging.info(f'Removed dir: {self.processed_dir}')
+            logging.info(f'Removed processed dir: {self.processed_dir}')
             self.remote_path = ''
         else:
             logging.info(f'Tried to remove processed_dir: {self.processed_dir} but it does not exist.')

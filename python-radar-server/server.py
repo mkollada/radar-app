@@ -21,15 +21,8 @@ next_tiles_dir = os.path.join(next_app_public_dir,'tiles')
 
 # Initialize data sources
 mrms_data_source = MRMSDataSource( 
-    raw_data_folder=os.path.join(local_data_folder,'mrms','raw'),
+    raw_data_folder=os.path.join(local_data_folder,'raw','mrms'),
     processed_data_folder=os.path.join(next_tiles_dir,'mrms'),
-    data_types=[
-        MRMSDataType(
-            name='Reflectivity_0C', 
-            variable_name='unknown',
-            type_of_level=None,
-        )
-    ],
     n_files=5
 )
 
