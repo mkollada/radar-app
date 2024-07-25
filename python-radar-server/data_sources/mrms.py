@@ -24,13 +24,6 @@ class MRMSDataSource(DataSource):
             self, 
             raw_data_folder='./data/raw/mrms', 
             processed_data_folder='../radar-app/public/tiles/mrms',
-            # data_types=[
-            #     MRMSDataType(
-            #         name='MergedBaseReflectivity', 
-            #         variable_name='unknown',
-            #         type_of_level=None,
-            #     )
-            # ],
             n_files=4,
             base_url='https://mrms.ncep.noaa.gov/data/2D/'
         ):
@@ -51,6 +44,8 @@ class MRMSDataSource(DataSource):
 
     # Creates geo_data_files for all dirs in self.processed_data_folder
     def init_processed_files(self):
+        os.makedirs(self.processed_variable_data_dir, exist_ok=True)
+        
         logging.info('Initializing processed_files...')
         for dir in os.listdir(self.processed_variable_data_dir):
             datetime = self.extract_datetime(dir)
@@ -144,7 +139,7 @@ class MRMSDataSource(DataSource):
         output_dir = self.get_processed_dir(geo_data_file)
         os.makedirs(output_dir, exist_ok=True)
         try:
-            file_processed = process_zipped_grib2_to_tiles(
+            success = process_zipped_grib2_to_tiles(
                 geo_data_file.local_path,
                 'unknown',
                 None,
@@ -153,11 +148,16 @@ class MRMSDataSource(DataSource):
                 target_crs='EPSG:3857',
                 filter_grib=False
             )
+            geo_data_file.processed_dir = output_dir
+
+            if not success:
+                geo_data_file.remove_processed_dir()
+                return None
         except Exception as e:
             logging.error(f'Error processing {geo_data_file.local_path} to tiles:', e)
             return None
         
-        geo_data_file.processed_dir = output_dir
+        
 
         return geo_data_file
     

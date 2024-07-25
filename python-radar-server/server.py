@@ -23,11 +23,11 @@ next_tiles_dir = os.path.join(next_app_public_dir,'tiles')
 mrms_data_source = MRMSDataSource( 
     raw_data_folder=os.path.join(local_data_folder,'raw','mrms'),
     processed_data_folder=os.path.join(next_tiles_dir,'mrms'),
-    n_files=10
+    n_files=20
 )
 
-data_sources = {}
-data_sources['mrms'] = mrms_data_source
+# data_sources = {}
+# data_sources['mrms'] = mrms_data_source
 
 nexrad_data_source = NexradDataSource(raw_data_folder='./data/nexrad/raw/', processed_data_folder='../radar-app/public/nexrad', data_types=None)
 
@@ -35,7 +35,7 @@ nexrad_data_source = NexradDataSource(raw_data_folder='./data/nexrad/raw/', proc
 gpm_data_source = GPMDataSource(
     raw_data_folder='./data/raw/gpm/', 
     processed_data_folder='../radar-app/public/tiles/gpm/',
-    n_files=10
+    n_files=5
 )
 
 @app.route('/')
@@ -60,6 +60,8 @@ def updateGPMData():
 def updateMRMSData():
     try:
         processed_dirs = mrms_data_source.update_data()
+        print('PROCESSED DIRS --------')
+        print(processed_dirs)
         radar_app_dirs = []
         for dir in processed_dirs:
             radar_app_dir = os.path.join(*dir.split('/')[4:])
@@ -73,30 +75,30 @@ def updateMRMSData():
 
 
 
-@app.route('/update-data', methods=['GET'])
-def updateData():
-    try:
-        update_data_dirs = {}
-        for data_source in data_sources:
-            print(f'{data_source} found. Updating data...')
+# @app.route('/update-data', methods=['GET'])
+# def updateData():
+#     try:
+#         update_data_dirs = {}
+#         for data_source in data_sources:
+#             print(f'{data_source} found. Updating data...')
             
-            data_dirs = data_sources[data_source].download_data()
-            update_data_dirs[data_source] = {}
-            for data_type in data_dirs:
-                update_data_dirs[data_source][data_type] = []
-                for dir in data_dirs[data_type]:
-                    new_dir = os.path.join(*dir.split('/')[4:])
-                    update_data_dirs[data_source][data_type].append(new_dir)
+#             data_dirs = data_sources[data_source].download_data()
+#             update_data_dirs[data_source] = {}
+#             for data_type in data_dirs:
+#                 update_data_dirs[data_source][data_type] = []
+#                 for dir in data_dirs[data_type]:
+#                     new_dir = os.path.join(*dir.split('/')[4:])
+#                     update_data_dirs[data_source][data_type].append(new_dir)
             
-            return jsonify({"dataLocs":update_data_dirs}), 200
-    except Exception as e:
-        logging.error(f"Error: {e}")
-        return jsonify({"error": str(e)}), 500
+#             return jsonify({"dataLocs":update_data_dirs}), 200
+#     except Exception as e:
+#         logging.error(f"Error: {e}")
+#         return jsonify({"error": str(e)}), 500
 
-    else:
-        error = f'{data_source} is not an active data source.'
-        logging.error(f"Error: {error}")
-        return jsonify({"error": str(error)}), 404
+    # else:
+        # error = f'{data_source} is not an active data source.'
+        # logging.error(f"Error: {error}")
+        # return jsonify({"error": str(error)}), 404
     
 @app.route('/update-nexrad-site/<path:site_code>/<path:variable_name>', methods=['GET'])
 def updateNexradSite(site_code: str, variable_name: str):

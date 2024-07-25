@@ -164,6 +164,12 @@ class NexradDataSource(DataSource):
             print(f'{processed_path} exists, Skipping download of {use_file.scan.awspath}...')
             return processed_path
         
+    def download_file(self, geo_data_file: GeoDataFile):
+        raise NotImplementedError
+    
+    def init_processed_files(self):
+        raise NotImplementedError
+        
 
 
         

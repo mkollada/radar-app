@@ -80,13 +80,13 @@ class DataSource(abc.ABC):
     def clean_up_processed_files(self):
         logging.info('Cleaning up processed_files...')
         self.processed_files.sort(reverse=True)
-        print('procesed_files ---------')
-        print(self.processed_files)
         files_to_remove = self.processed_files[self.n_files:]
-        self.processed_files = self.processed_files[:self.n_files]
+        if len(self.processed_files) > self.n_files:
+            self.processed_files = self.processed_files[:self.n_files]
         for geo_data_file in files_to_remove:
             geo_data_file.remove_processed_dir()
         logging.info('processed_files cleaned.')
+        self.processed_files.sort()
 
     def download_files(self, geo_data_files: List[GeoDataFile]) -> List[GeoDataFile]:
         downloaded_files: List[GeoDataFile] = []
@@ -99,9 +99,15 @@ class DataSource(abc.ABC):
     def process_files(self, downloaded_files: List[GeoDataFile]):
         for file in downloaded_files:
             processed_file = self.process_file(file)
-            if processed_file:
-                if processed_file not in self.processed_files:
+
+            processed_dirs = self.get_processed_dirs()
+
+            if processed_file is not None:
+                if processed_file.processed_dir not in processed_dirs:
                     self.processed_files.append(processed_file)
+
+            
+
 
     @abc.abstractmethod
     def download_file(self, geo_data_file: GeoDataFile):

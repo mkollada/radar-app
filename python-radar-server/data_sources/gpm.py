@@ -197,3 +197,6 @@ class GPMDataSource(DataSource):
         key_dir = os.path.splitext(file.key)[0]
         file_dir = key_dir.split('/')[-1]
         return os.path.join(self.processed_variable_data_dir, file_dir)
+
+    def init_processed_files(self):
+        raise NotImplementedError
