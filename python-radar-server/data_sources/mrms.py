@@ -61,7 +61,8 @@ class MRMSDataSource(DataSource):
             date_part = parts[-1].split('.')[0]
             file_datetime = datetime.strptime(date_part, '%Y%m%d-%H%M%S')
             return file_datetime
-        except (IndexError, ValueError):
+        except (IndexError, ValueError) as e:
+            logging.error(f"Error parsing date from {name}: {e}")
             return datetime.min
 
     def fetch_data_files(self) -> List[GeoDataFile]:
@@ -87,8 +88,8 @@ class MRMSDataSource(DataSource):
                         processed_dir=''
                     )
                     geo_data_files.append(file)
-                except (IndexError, ValueError) as e:
-                    print(f"Error parsing date from {href}: {e}")
+                except Exception as e:
+                    logging.error(f"Error createing Geo Data File date from {href}: {e}")
 
         geo_data_files.sort()
         recent_geo_data_files = geo_data_files[-self.n_files:]
