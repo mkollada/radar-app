@@ -33,6 +33,7 @@ export const USLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, i
   }, [directories, interval]);
 
   useEffect(() => {
+    console.log('Current directory US:')
     console.log(directories[currentDirectoryIndex])
   }, [currentDirectoryIndex])
 
@@ -86,6 +87,7 @@ export const GlobalLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directorie
   }, [directories, interval]);
 
   useEffect(() => {
+    console.log('Current directory Global:')
     console.log(directories[currentDirectoryIndex])
   }, [currentDirectoryIndex])
 
