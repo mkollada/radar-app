@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
 import styles from '../styles/PrecipitationMap.module.css';
+import {ColorLegend, LegendColor} from './ColorLegend';
 
 const MapContainer = dynamic(
   () => import('react-leaflet').then((mod) => mod.MapContainer),
@@ -15,46 +16,16 @@ const TileLayer = dynamic(
 interface LoopingTileMapProps {
   directories: string[];
   interval: number;
+  legendColors: LegendColor[]
 }
 
-const legendColors = [
-  { value: 0.0, color: 'rgba(0, 0, 0, 0)' },
-  { value: 0.1, color: 'rgba(173, 216, 230, 1)' },
-  { value: 1.0, color: 'rgba(135, 206, 235, 1)' },
-  { value: 2.5, color: 'rgba(0, 255, 255, 1)' },
-  { value: 5.0, color: 'rgba(0, 255, 127, 1)' },
-  { value: 10.0, color: 'rgba(255, 255, 0, 1)' },
-  { value: 20.0, color: 'rgba(255, 165, 0, 1)' },
-  { value: 50.0, color: 'rgba(255, 69, 0, 1)' },
-  { value: 100.0, color: 'rgba(139, 0, 139, 1)' },
-];
-
-const ColorLegend: React.FC = () => {
-  const gradientColors = legendColors.map(color => color.color).join(', ');
-  return (
-    <div className={styles.legendContainer}>
-      <div className={styles.legendGradient} style={{ background: `linear-gradient(${gradientColors})` }}></div>
-      <div className={styles.legendLabels}>
-        {legendColors.map((item, index) => (
-          <div key={index} className={styles.legendLabel}>
-            {item.value}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-export const USLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, interval }) => {
-
+export const USLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, interval, legendColors }) => {
   const [currentDirectoryIndex, setCurrentDirectoryIndex] = useState(0);
-
 
   useEffect(() => {
     if (directories.length > 0) {
       const timer = setInterval(() => {
         setCurrentDirectoryIndex((prevIndex) => (prevIndex + 1) % directories.length);
-
       }, interval);
 
       return () => clearInterval(timer);
@@ -71,7 +42,7 @@ export const USLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, i
 
   return (
     <div className={styles.mapContainer}>
-      <ColorLegend />
+      <ColorLegend legendColors={legendColors} />
       <MapContainer
         center={[37.8, -96.9]} // Center over the US
         zoom={4} // Appropriate zoom level for the US
@@ -99,16 +70,15 @@ export const USLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, i
   );
 };
 
-export const GlobalLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, interval }) => {
 
+
+export const GlobalLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, interval, legendColors }) => {
   const [currentDirectoryIndex, setCurrentDirectoryIndex] = useState(0);
-
 
   useEffect(() => {
     if (directories.length > 0) {
       const timer = setInterval(() => {
         setCurrentDirectoryIndex((prevIndex) => (prevIndex + 1) % directories.length);
-
       }, interval);
 
       return () => clearInterval(timer);
@@ -125,7 +95,7 @@ export const GlobalLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directorie
 
   return (
     <div className={styles.mapContainer}>
-      <ColorLegend />
+      <ColorLegend legendColors={legendColors} />
       <MapContainer
         center={[0, 0]} // Center over the US
         zoom={3} // Appropriate zoom level for the US

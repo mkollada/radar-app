@@ -37,7 +37,7 @@ nexrad_data_source = NexradDataSource(
 gpm_data_source = GPMDataSource(
     raw_data_folder='./data/raw/gpm/', 
     processed_data_folder='../radar-app/public/tiles/gpm/',
-    n_files=5
+    n_files=3
 )
 
 # Satellite
@@ -56,9 +56,12 @@ def updateGPMData():
     try:
         processed_dirs = gpm_data_source.update_data()
         radar_app_dirs = []
+        
         for dir in processed_dirs:
             radar_app_dir = os.path.join(*dir.split('/')[4:])
             radar_app_dirs.append(radar_app_dir)
+        print('------ PROCESSED DIRS ------')
+        print(radar_app_dirs)
         return jsonify({"directories":radar_app_dirs}), 200
     except Exception as e:
         logging.error(f"Error: {e}")

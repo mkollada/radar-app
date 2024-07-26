@@ -285,15 +285,15 @@ def process_tif_to_tiles(
     output_colored_tif = base_temp_file_name + '_3857.tif'
     reprojected_tif = base_temp_file_name + '_colored.tif'
 
-    apply_color_relief(input_tif, color_relief_file, output_colored_tif)
-    generate_tiles(output_colored_tif, output_tiles, profile='mercator')
-    remove_intermediate_files([output_8bit_tif, reprojected_tif, output_colored_tif, 'temp.vrt'])
+    # apply_color_relief(input_tif, color_relief_file, output_colored_tif)
+    # generate_tiles(output_colored_tif, output_tiles, profile='mercator')
+    # remove_intermediate_files([output_8bit_tif, reprojected_tif, output_colored_tif, 'temp.vrt'])
 
     
     color_success = apply_color_relief(input_tif, color_relief_file, output_colored_tif)
     
     if color_success:
-        tiles_success = generate_tiles(reprojected_tif, output_tiles, profile='mercator')
+        tiles_success = generate_tiles(output_colored_tif, output_tiles, profile='mercator')
     else:
         return False
 

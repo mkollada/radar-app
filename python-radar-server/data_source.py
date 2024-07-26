@@ -121,6 +121,7 @@ class DataSource(abc.ABC):
             if processed_file is not None:
                 if processed_file.processed_dir not in processed_dirs:
                     self.processed_files.append(processed_file)
+            file.remove_local_file()
 
             
 
