@@ -45,7 +45,7 @@ class MRMSDataSource(DataSource):
                 datetime=datetime,
                 remote_path='',
                 local_path='',
-                processed_dir=os.path.join(
+                processed_loc=os.path.join(
                     self.processed_variable_data_dir,
                     dir 
                 ),
@@ -85,7 +85,7 @@ class MRMSDataSource(DataSource):
                         remote_path=os.path.join(self.variable_url,href),
                         key=key,
                         local_path='',
-                        processed_dir=''
+                        processed_loc=''
                     )
                     geo_data_files.append(file)
                 except Exception as e:
@@ -129,7 +129,7 @@ class MRMSDataSource(DataSource):
 
     def process_file(self, geo_data_file: GeoDataFile) -> GeoDataFile | None:
 
-        output_dir = self.get_processed_dir(geo_data_file)
+        output_dir = self.get_processed_loc(geo_data_file)
         os.makedirs(output_dir, exist_ok=True)
         try:
             success = process_zipped_grib2_to_tiles(
@@ -141,10 +141,10 @@ class MRMSDataSource(DataSource):
                 target_crs='EPSG:3857',
                 filter_grib=False
             )
-            geo_data_file.processed_dir = output_dir
+            geo_data_file.processed_loc = output_dir
 
             if not success:
-                geo_data_file.remove_processed_dir()
+                geo_data_file.remove_processed_loc()
                 return None
         except Exception as e:
             logging.error(f'Error processing {geo_data_file.local_path} to tiles:', e)

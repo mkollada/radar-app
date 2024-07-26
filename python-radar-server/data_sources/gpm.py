@@ -28,30 +28,11 @@ class GPMDataSource(DataSource):
         # Assuming the filename format is fixed: gpm_30mn.YYYYMMDD.HHMMSS.tif
         try:
             base_name = name.split('.')[1] + name.split('.')[2]
-            extracted_datetime = datetime.datetime.strptime(base_name, "%Y%m%d%H%M%S")
+            extracted_datetime = datetime.strptime(base_name, "%Y%m%d%H%M%S")
             return extracted_datetime
         except (IndexError, ValueError) as e:
             print(f"Error parsing datetime from filename: {e}")
             return None
-
-
-    def clean_up_processed_files(self):
-        logging.info('Cleaning up processed_files...')
-        self.sort_processed_files()
-        files_to_remove = self.processed_files[self.n_files:]
-        self.processed_files = self.processed_files[:self.n_files]
-        for file in files_to_remove:
-            file.remove_processed_dir()
-        processed_dirs = self.get_processed_dirs()
-        
-        # delete files that shouldn't be there
-        for dir in os.listdir(self.processed_variable_data_dir):
-            check_dir = os.path.join(self.processed_variable_data_dir, dir)
-            if check_dir not in processed_dirs:
-                shutil.rmtree(check_dir)
-                logging.info(f'Removing unnecessary dir: {check_dir}')
-                        
-        logging.info('processed_files cleaned.')
 
     def fetch_data_files(self) -> List[GeoDataFile]:
         logging.info('Fetching recent GPM Files...')
@@ -79,7 +60,7 @@ class GPMDataSource(DataSource):
                                                     key=url.split(self.remote_data_loc)[1],
                                                     datetime=file_datetime,
                                                     local_path='',
-                                                    processed_dir='')
+                                                    processed_loc='')
                         gpm_data_files.append(geo_data_file)
                     else:
                         logging.error(f'Error, geotiff not in expected location in GPM using object')
@@ -94,19 +75,19 @@ class GPMDataSource(DataSource):
     def check_if_downloaded(self, geo_data_files: List[GeoDataFile]) -> List[GeoDataFile]:
         files_to_download: List[GeoDataFile] = []
         for file in geo_data_files:
-            processed_dir = self.get_processed_dir(file)
-            if not os.path.exists(processed_dir):
+            processed_loc = self.get_processed_loc(file)
+            if not os.path.exists(processed_loc):
                 files_to_download.append(file)
             else:
-                logging.info(f'{processed_dir} exists, Skipping download of {file.key}...')
+                logging.info(f'{processed_loc} exists, Skipping download of {file.key}...')
                 # check if file that's been processed is in self.processed_files
                 in_processed_files = False
                 for processed_file in self.processed_files:
-                    if (processed_file.processed_dir == processed_dir):
+                    if (processed_file.processed_loc == processed_loc):
                         in_processed_files = True
                 if not in_processed_files:
-                    logging.info(f'{processed_dir} exists, but was not in self.processed_files. adding...')
-                    file.processed_dir = processed_dir
+                    logging.info(f'{processed_loc} exists, but was not in self.processed_files. adding...')
+                    file.processed_loc = processed_loc
                     self.processed_files.append(file)
         return files_to_download
 
@@ -152,7 +133,7 @@ class GPMDataSource(DataSource):
         self.remove_downloaded_files(downloaded_files)
         self.clean_up_processed_files()
 
-        return self.get_processed_dirs()
+        return self.get_processed_locs()
 
         
 
@@ -176,27 +157,27 @@ class GPMDataSource(DataSource):
     
     def process_file(self, geo_data_file: GeoDataFile) -> GeoDataFile | None:
         logging.info(f'Processing {geo_data_file.local_path}')
-        processed_dir = self.get_processed_dir(geo_data_file)
+        processed_loc = self.get_processed_loc(geo_data_file)
         try:
-            success = process_tif_to_tiles(geo_data_file.local_path, processed_dir, self.color_relief_file)
+            success = process_tif_to_tiles(geo_data_file.local_path, processed_loc, self.color_relief_file)
             logging.info(f'{geo_data_file.local_path} processed successfully to tiles.')
-            geo_data_file.processed_dir = processed_dir
+            geo_data_file.processed_loc = processed_loc
 
             if not success:
-                print(f'file: {geo_data_file.processed_dir} failed. REMOVING.....')
-                geo_data_file.remove_processed_dir()
+                print(f'file: {geo_data_file.processed_loc} failed. REMOVING.....')
+                geo_data_file.remove_processed_loc()
                 return None
 
         except Exception as e:
             logging.error(f'Error processing GPM tif to tiles for {geo_data_file.local_path}:', e)
-            geo_data_file.remove_processed_dir()
+            geo_data_file.remove_processed_loc()
             return None
 
         return geo_data_file
 
     
     # ## TODO
-    # def get_processed_dir(self, file: GeoDataFile) -> str:
+    # def get_processed_loc(self, file: GeoDataFile) -> str:
     #     key_dir = os.path.splitext(file.key)[0]
     #     file_dir = key_dir.split('/')[-1]
     #     return os.path.join(self.processed_variable_data_dir, file_dir)

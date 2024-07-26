@@ -20,7 +20,7 @@ class GeoDataFile:
     datetime: datetime
     remote_path: str
     local_path: str
-    processed_dir: str
+    processed_loc: str
     key: str
     
     # data_type: DataType
@@ -33,13 +33,13 @@ class GeoDataFile:
         else:
             logging.info(f'Tried to remove local_path: {self.local_path}, but it does not exist.')
 
-    def remove_processed_dir(self):
-        if self.processed_dir and os.path.exists(self.processed_dir):
-            shutil.rmtree(self.processed_dir)
-            logging.info(f'Removed processed dir: {self.processed_dir}')
-            self.processed_dir = ''
+    def remove_processed_loc(self):
+        if self.processed_loc and os.path.exists(self.processed_loc):
+            shutil.rmtree(self.processed_loc)
+            logging.info(f'Removed processed dir: {self.processed_loc}')
+            self.processed_loc = ''
         else:
-            logging.info(f'Tried to remove processed_dir: {self.processed_dir} but it does not exist.')
+            logging.info(f'Tried to remove processed_loc: {self.processed_loc} but it does not exist.')
 
     def __lt__(self, other):
         if not isinstance(other, GeoDataFile):

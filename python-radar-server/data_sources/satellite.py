@@ -62,7 +62,7 @@ class SatDataSource(DataSource):
                     remote_path=obj['Key'],
                     key=obj['Key'],
                     local_path='',
-                    processed_dir=''
+                    processed_loc=''
                 )
 
                 sat_data_files.append(geo_data_file)
@@ -99,19 +99,19 @@ class SatDataSource(DataSource):
 
     def process_file(self, file: GeoDataFile) -> GeoDataFile | None:
         logging.info(f'Processing {file.local_path}')
-        processed_dir = self.get_processed_dir(file)
-        os.makedirs(processed_dir, exist_ok=True)
+        processed_loc = self.get_processed_loc(file)
+        os.makedirs(processed_loc, exist_ok=True)
         try:
             success = process_netcdf_to_tiles(
                 file.local_path,
                 'data',
-                processed_dir,
+                processed_loc,
                 self.color_relief_file,
             )
             logging.info(f'{file.local_path} processed successfully to tiles.')
-            file.processed_dir = processed_dir
+            file.processed_loc = processed_loc
             if not success:
-                file.remove_processed_dir()
+                file.remove_processed_loc()
                 return None
         except Exception as e:
             logging.error(f'Error processing satellite netcdf to tiles for {file.local_path}:', e)

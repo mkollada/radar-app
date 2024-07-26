@@ -33,7 +33,7 @@ class DataSource(abc.ABC):
                 datetime=datetime,
                 remote_path='',
                 local_path='',
-                processed_dir=os.path.join(
+                processed_loc=os.path.join(
                     self.processed_variable_data_dir,
                     dir 
                 ),
@@ -50,15 +50,15 @@ class DataSource(abc.ABC):
     def get_download_path(self, file: GeoDataFile) -> str:
         return os.path.join(self.raw_data_folder,file.key)
     
-    def get_processed_dir(self, file: GeoDataFile) -> str:
+    def get_processed_loc(self, file: GeoDataFile) -> str:
         file_dir = file.key.split('/')[-1]
         return os.path.join(self.processed_variable_data_dir, file_dir)
     
-    def get_processed_dirs(self) -> List[str]:
-        processed_dirs = []
+    def get_processed_locs(self) -> List[str]:
+        processed_locs = []
         for file in self.processed_files:
-            processed_dirs.append(file.processed_dir)
-        return processed_dirs
+            processed_locs.append(file.processed_loc)
+        return processed_locs
     
     '''
     Returns files_to_download: List[GeoDataFile]
@@ -66,19 +66,19 @@ class DataSource(abc.ABC):
     def check_if_downloaded(self, geo_data_files: List[GeoDataFile]) -> List[GeoDataFile]:
         files_to_download: List[GeoDataFile] = []
         for file in geo_data_files:
-            processed_dir = self.get_processed_dir(file)
-            if not os.path.exists(processed_dir):
+            processed_loc = self.get_processed_loc(file)
+            if not os.path.exists(processed_loc):
                 files_to_download.append(file)
             else:
-                logging.info(f'{processed_dir} exists, Skipping download of {file.key}...')
+                logging.info(f'{processed_loc} exists, Skipping download of {file.key}...')
                 # check if file that's been processed is in self.processed_files
                 in_processed_files = False
                 for processed_file in self.processed_files:
-                    if (processed_file.processed_dir == processed_dir):
+                    if (processed_file.processed_loc == processed_loc):
                         in_processed_files = True
                 if not in_processed_files:
-                    logging.info(f'{processed_dir} exists, but was not in self.processed_files. adding...')
-                    file.processed_dir = processed_dir
+                    logging.info(f'{processed_loc} exists, but was not in self.processed_files. adding...')
+                    file.processed_loc = processed_loc
                     self.processed_files.append(file)
         return files_to_download
 
@@ -94,7 +94,7 @@ class DataSource(abc.ABC):
         self.remove_downloaded_files(downloaded_files)
         self.clean_up_processed_files()
 
-        return self.get_processed_dirs()
+        return self.get_processed_locs()
     
     def clean_up_processed_files(self):
         logging.info('Cleaning up processed_files...')
@@ -103,7 +103,7 @@ class DataSource(abc.ABC):
         if len(self.processed_files) > self.n_files:
             self.processed_files = self.processed_files[:self.n_files]
         for geo_data_file in files_to_remove:
-            geo_data_file.remove_processed_dir()
+            geo_data_file.remove_processed_loc()
         logging.info('processed_files cleaned.')
         self.sort_processed_files()
 
@@ -119,10 +119,10 @@ class DataSource(abc.ABC):
         for file in downloaded_files:
             processed_file = self.process_file(file)
 
-            processed_dirs = self.get_processed_dirs()
+            processed_locs = self.get_processed_locs()
 
             if processed_file is not None:
-                if processed_file.processed_dir not in processed_dirs:
+                if processed_file.processed_loc not in processed_locs:
                     self.processed_files.append(processed_file)
             file.remove_local_file()
 
