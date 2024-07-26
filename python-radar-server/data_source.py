@@ -49,6 +49,7 @@ class DataSource(abc.ABC):
     
     def get_processed_dir(self, file: GeoDataFile) -> str:
         file_dir = file.key.split('/')[-1]
+        file_dir = file_dir.replace('.', '_')
         return os.path.join(self.processed_variable_data_dir, file_dir)
     
     def get_processed_dirs(self) -> List[str]:

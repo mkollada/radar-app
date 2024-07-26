@@ -77,7 +77,7 @@ class MRMSDataSource(DataSource):
             href = link.get('href')
             if href.endswith('.gz') and 'latest' not in href:
                 try:
-                    file_datetime = self.extract_datetime(href)
+                    file_datetime = self.extract_datetime_from_name(href)
                     key = href.split(self.variable_url)[-1]
                     file = GeoDataFile(
                         datetime=file_datetime,

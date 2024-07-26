@@ -63,22 +63,22 @@ const Home: React.FC = () => {
     }
   }
 
-  // Setting timers for updating each of the data types
   useEffect(() => {
-    updateGPMData()
-    // updateMRMSData()
-    // updateSatelliteData()
+    updateGPMData();
+    updateMRMSData();
 
+    const updateMRMSInterval = setInterval(() => {
+      updateMRMSData();
+    }, 120000); // 2 minutes
 
-    // const updateInterval = setInterval(() => {
-    //   updateData();
-    // }, 120000); // 2 minutes
+    const updateGPMInterval = setInterval(() => {
+      updateGPMData();
+    }, 1800000); // 30 minutes
 
-    // const gpmUpdateInterval = setInterval(() => {
-    //   updateGPMData()
-    // }, 1800000)
-
-    // return () => clearInterval(updateInterval);
+    return () => {
+      clearInterval(updateMRMSInterval);
+      clearInterval(updateGPMInterval);
+    };
   }, []);
 
   const gpmLegendColors = [

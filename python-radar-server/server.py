@@ -2,12 +2,12 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 import os
 import logging
+import threading
 
 from data_sources.mrms import MRMSDataSource
 from data_sources.nexrad import NexradDataSource
 from data_sources.gpm import GPMDataSource
 from data_sources.satellite import SatDataSource
-
 
 app = Flask(__name__)
 CORS(app)
@@ -16,26 +16,24 @@ app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100 MB
 
 local_data_folder = './data'
 next_app_public_dir = '../radar-app/public'
-next_tiles_dir = os.path.join(next_app_public_dir,'tiles')
-
-
+next_tiles_dir = os.path.join(next_app_public_dir, 'tiles')
 
 ### Initialize data sources
 # MRMS
-mrms_data_source = MRMSDataSource( 
-    raw_data_folder=os.path.join(local_data_folder,'raw','mrms'),
-    processed_data_folder=os.path.join(next_tiles_dir,'mrms'),
+mrms_data_source = MRMSDataSource(
+    raw_data_folder=os.path.join(local_data_folder, 'raw', 'mrms'),
+    processed_data_folder=os.path.join(next_tiles_dir, 'mrms'),
     n_files=20
 )
 # NEXRAD
 nexrad_data_source = NexradDataSource(
-    raw_data_folder='./data/nexrad/raw/', 
-    processed_data_folder='../radar-app/public/nexrad', 
+    raw_data_folder='./data/nexrad/raw/',
+    processed_data_folder='../radar-app/public/nexrad',
 )
 
 # GPM
 gpm_data_source = GPMDataSource(
-    raw_data_folder='./data/raw/gpm/', 
+    raw_data_folder='./data/raw/gpm/',
     processed_data_folder='../radar-app/public/tiles/gpm/',
     n_files=3
 )
@@ -47,92 +45,85 @@ sat_data_source = SatDataSource(
     n_files=6
 )
 
+# Global lock for synchronizing all data updates
+global_update_lock = threading.Lock()
+
 @app.route('/')
 def index():
     return "Welcome to the Spartan Weather Data API!"
 
 @app.route('/update-gpm-data', methods=['GET'])
 def updateGPMData():
-    try:
-        processed_dirs = gpm_data_source.update_data()
-        radar_app_dirs = []
-        
-        for dir in processed_dirs:
-            radar_app_dir = os.path.join(*dir.split('/')[4:])
-            radar_app_dirs.append(radar_app_dir)
-        print('------ PROCESSED DIRS ------')
-        print(radar_app_dirs)
-        return jsonify({"directories":radar_app_dirs}), 200
-    except Exception as e:
-        logging.error(f"Error: {e}")
-        return jsonify({"error": str(e)}), 500 
-    
+    logging.info("Received request to update GPM data")
+    with global_update_lock:
+        logging.info("Acquired lock for updating GPM data")
+        try:
+            processed_dirs = gpm_data_source.update_data()
+            radar_app_dirs = []
+            for dir in processed_dirs:
+                radar_app_dir = os.path.join(*dir.split('/')[4:])
+                radar_app_dirs.append(radar_app_dir)
+            logging.info("Processed directories: %s", radar_app_dirs)
+            return jsonify({"directories": radar_app_dirs}), 200
+        except Exception as e:
+            logging.error(f"Error: {e}")
+            return jsonify({"error": str(e)}), 500
+        finally:
+            logging.info("Released lock for updating GPM data")
 
 @app.route('/update-mrms-data', methods=['GET'])
 def updateMRMSData():
-    try:
-        processed_dirs = mrms_data_source.update_data()
-        radar_app_dirs = []
-        for dir in processed_dirs:
-            radar_app_dir = os.path.join(*dir.split('/')[4:])
-            radar_app_dirs.append(radar_app_dir)
-        return jsonify({"directories":radar_app_dirs}), 200
-    except Exception as e:
-        logging.error(f"Error: {e}")
-        return jsonify({"error": str(e)}), 500 
-    
+    logging.info("Received request to update MRMS data")
+    with global_update_lock:
+        logging.info("Acquired lock for updating MRMS data")
+        try:
+            processed_dirs = mrms_data_source.update_data()
+            radar_app_dirs = []
+            for dir in processed_dirs:
+                radar_app_dir = os.path.join(*dir.split('/')[4:])
+                radar_app_dirs.append(radar_app_dir)
+            logging.info("Processed directories: %s", radar_app_dirs)
+            return jsonify({"directories": radar_app_dirs}), 200
+        except Exception as e:
+            logging.error(f"Error: {e}")
+            return jsonify({"error": str(e)}), 500
+        finally:
+            logging.info("Released lock for updating MRMS data")
+
 @app.route('/update-satellite-data', methods=['GET'])
 def updateSatelliteData():
-    try:
-        processed_dirs = sat_data_source.update_data()
-        radar_app_dirs = []
-        for dir in processed_dirs:
-            radar_app_dir = os.path.join(*dir.split('/')[4:])
-            radar_app_dirs.append(radar_app_dir)
-        return jsonify({"directories":radar_app_dirs}), 200
-    except Exception as e:
-        logging.error(f"Error: {e}")
-        return jsonify({"error": str(e)}), 500 
-    
+    logging.info("Received request to update Satellite data")
+    with global_update_lock:
+        logging.info("Acquired lock for updating Satellite data")
+        try:
+            processed_dirs = sat_data_source.update_data()
+            radar_app_dirs = []
+            for dir in processed_dirs:
+                radar_app_dir = os.path.join(*dir.split('/')[4:])
+                radar_app_dirs.append(radar_app_dir)
+            logging.info("Processed directories: %s", radar_app_dirs)
+            return jsonify({"directories": radar_app_dirs}), 200
+        except Exception as e:
+            logging.error(f"Error: {e}")
+            return jsonify({"error": str(e)}), 500
+        finally:
+            logging.info("Released lock for updating Satellite data")
 
-
-
-
-# @app.route('/update-data', methods=['GET'])
-# def updateData():
-#     try:
-#         update_data_dirs = {}
-#         for data_source in data_sources:
-#             print(f'{data_source} found. Updating data...')
-            
-#             data_dirs = data_sources[data_source].download_data()
-#             update_data_dirs[data_source] = {}
-#             for data_type in data_dirs:
-#                 update_data_dirs[data_source][data_type] = []
-#                 for dir in data_dirs[data_type]:
-#                     new_dir = os.path.join(*dir.split('/')[4:])
-#                     update_data_dirs[data_source][data_type].append(new_dir)
-            
-#             return jsonify({"dataLocs":update_data_dirs}), 200
-#     except Exception as e:
-#         logging.error(f"Error: {e}")
-#         return jsonify({"error": str(e)}), 500
-
-    # else:
-        # error = f'{data_source} is not an active data source.'
-        # logging.error(f"Error: {error}")
-        # return jsonify({"error": str(error)}), 404
-    
 @app.route('/update-nexrad-site/<path:site_code>/<path:variable_name>', methods=['GET'])
 def updateNexradSite(site_code: str, variable_name: str):
-    try:
-        processed_file = nexrad_data_source.update_data(site_code=site_code, variable_name=variable_name)
-        processed_file_radar_app_loc = os.path.join(*processed_file.split('/')[4:])
-        return jsonify({'imageUrl':processed_file_radar_app_loc}), 200
-    except Exception as e:
-        logging.error(f"Error in /nexrad-update-date route: {e}")
-        return jsonify({"error": str(e)}), 500
-
+    logging.info("Received request to update NEXRAD site data")
+    with global_update_lock:
+        logging.info("Acquired lock for updating NEXRAD site data")
+        try:
+            processed_file = nexrad_data_source.update_data(site_code=site_code, variable_name=variable_name)
+            processed_file_radar_app_loc = os.path.join(*processed_file.split('/')[4:])
+            logging.info("Processed file location: %s", processed_file_radar_app_loc)
+            return jsonify({'imageUrl': processed_file_radar_app_loc}), 200
+        except Exception as e:
+            logging.error(f"Error in /nexrad-update-data route: {e}")
+            return jsonify({"error": str(e)}), 500
+        finally:
+            logging.info("Released lock for updating NEXRAD site data")
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
