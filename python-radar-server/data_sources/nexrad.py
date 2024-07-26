@@ -49,9 +49,6 @@ class NexradDataSource(DataSource):
             logging.error('Error fetching scans:', e)
         return nexrad_geo_data_files
 
-    def get_download_path(self, nexrad_geo_data_file: NexradGeoDataFile) -> str:
-        return os.path.join(self.raw_data_folder,nexrad_geo_data_file.scan.filename)
-
     def check_if_downloaded(
             self, nexrad_geo_data_files: List[NexradGeoDataFile], variable_name: str
     ) -> List[NexradGeoDataFile]:

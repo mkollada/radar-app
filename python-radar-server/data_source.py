@@ -20,6 +20,9 @@ class DataSource(abc.ABC):
     def extract_datetime_from_name(self, name: str):
         raise NotImplementedError
 
+    def sort_processed_files(self, reverse=False):
+        self.processed_files.sort(reverse=reverse)
+
     # Creates geo_data_files for all dirs in self.processed_data_folder
     def init_processed_files(self):
         os.makedirs(self.processed_variable_data_dir, exist_ok=True)
@@ -49,7 +52,6 @@ class DataSource(abc.ABC):
     
     def get_processed_dir(self, file: GeoDataFile) -> str:
         file_dir = file.key.split('/')[-1]
-        file_dir = file_dir.replace('.', '_')
         return os.path.join(self.processed_variable_data_dir, file_dir)
     
     def get_processed_dirs(self) -> List[str]:
@@ -96,14 +98,14 @@ class DataSource(abc.ABC):
     
     def clean_up_processed_files(self):
         logging.info('Cleaning up processed_files...')
-        self.processed_files.sort(reverse=True)
+        self.sort_processed_files(reverse=True)
         files_to_remove = self.processed_files[self.n_files:]
         if len(self.processed_files) > self.n_files:
             self.processed_files = self.processed_files[:self.n_files]
         for geo_data_file in files_to_remove:
             geo_data_file.remove_processed_dir()
         logging.info('processed_files cleaned.')
-        self.processed_files.sort()
+        self.sort_processed_files()
 
     def download_files(self, geo_data_files: List[GeoDataFile]) -> List[GeoDataFile]:
         downloaded_files: List[GeoDataFile] = []

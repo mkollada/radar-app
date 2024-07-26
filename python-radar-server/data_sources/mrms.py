@@ -91,7 +91,7 @@ class MRMSDataSource(DataSource):
                 except Exception as e:
                     logging.error(f"Error createing Geo Data File date from {href}: {e}")
 
-        geo_data_files.sort()
+        self.sort_processed_files()
         recent_geo_data_files = geo_data_files[-self.n_files:]
 
         return recent_geo_data_files
@@ -153,11 +153,3 @@ class MRMSDataSource(DataSource):
         
 
         return geo_data_file
-    
-
-
-    
-    
-    
-    # def remove_downloaded_files(self, downloaded_files: List[GeoDataFile]):
-    #     return super().remove_downloaded_files(downloaded_files)

@@ -21,8 +21,8 @@ class GPMDataSource(DataSource):
         self.remote_data_loc = 'https://pmmpublisher.pps.eosdis.nasa.gov/products/s3/'
         self.color_relief_file = './assets/color_reliefs/GPM_color_relief.txt'
         self.processed_files: List[GeoDataFile] = []
-        # self.init_processed_files()
-        # self.clean_up_processed_files()
+        self.init_processed_files()
+        self.clean_up_processed_files()
 
     def extract_datetime_from_name(self, name:str):
         # Assuming the filename format is fixed: gpm_30mn.YYYYMMDD.HHMMSS.tif
@@ -37,7 +37,7 @@ class GPMDataSource(DataSource):
 
     def clean_up_processed_files(self):
         logging.info('Cleaning up processed_files...')
-        self.processed_files.sort()
+        self.sort_processed_files()
         files_to_remove = self.processed_files[self.n_files:]
         self.processed_files = self.processed_files[:self.n_files]
         for file in files_to_remove:
