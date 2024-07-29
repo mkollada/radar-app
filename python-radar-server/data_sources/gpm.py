@@ -1,7 +1,7 @@
 from typing import List
 from classes import GeoDataFile
 from data_source import DataSource
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 import requests
 import re
@@ -10,17 +10,20 @@ import shutil
 from utils.data_to_tiles import process_tif_to_tiles
 
 class GPMDataSource(DataSource):
-    def __init__(self, raw_data_folder, processed_data_folder, 
-                 base_url='https://pmmpublisher.pps.eosdis.nasa.gov/opensearch', 
-                 n_files=1):
-        super().__init__(raw_data_folder, processed_data_folder, base_url)
-        self.n_files = n_files
+    def __init__(
+            self, raw_data_folder: str, 
+            processed_data_folder: str, 
+            time_delta: timedelta
+        ):
+        super().__init__(raw_data_folder, processed_data_folder, time_delta)
 
         self.variable_name = 'precip_30mn'
         self.processed_variable_data_dir = os.path.join(processed_data_folder, self.variable_name)
         self.remote_data_loc = 'https://pmmpublisher.pps.eosdis.nasa.gov/products/s3/'
         self.color_relief_file = './assets/color_reliefs/GPM_color_relief.txt'
+        self.base_url='https://pmmpublisher.pps.eosdis.nasa.gov/opensearch'
         self.processed_files: List[GeoDataFile] = []
+        self.n_files=15
         self.init_processed_files()
         self.clean_up_processed_files()
 
@@ -29,6 +32,7 @@ class GPMDataSource(DataSource):
         try:
             base_name = name.split('.')[1] + name.split('.')[2]
             extracted_datetime = datetime.strptime(base_name, "%Y%m%d%H%M%S")
+            extracted_datetime = extracted_datetime.replace(tzinfo=timezone.utc)
             return extracted_datetime
         except (IndexError, ValueError) as e:
             print(f"Error parsing datetime from filename: {e}")
@@ -38,7 +42,7 @@ class GPMDataSource(DataSource):
         logging.info('Fetching recent GPM Files...')
         gpm_data_files: List[GeoDataFile] = []
         try:
-            today = str(datetime.now().date())
+            today = str(datetime.now(timezone.utc).date())
             yesterday = str((datetime.today() - timedelta(days=1)).date())
 
             query = f'{self.base_url}?q={self.variable_name}&limit={self.n_files}' + \
@@ -72,24 +76,24 @@ class GPMDataSource(DataSource):
         logging.info('Files fetched.')
         return gpm_data_files
 
-    def check_if_downloaded(self, geo_data_files: List[GeoDataFile]) -> List[GeoDataFile]:
-        files_to_download: List[GeoDataFile] = []
-        for file in geo_data_files:
-            processed_loc = self.get_processed_loc(file)
-            if not os.path.exists(processed_loc):
-                files_to_download.append(file)
-            else:
-                logging.info(f'{processed_loc} exists, Skipping download of {file.key}...')
-                # check if file that's been processed is in self.processed_files
-                in_processed_files = False
-                for processed_file in self.processed_files:
-                    if (processed_file.processed_loc == processed_loc):
-                        in_processed_files = True
-                if not in_processed_files:
-                    logging.info(f'{processed_loc} exists, but was not in self.processed_files. adding...')
-                    file.processed_loc = processed_loc
-                    self.processed_files.append(file)
-        return files_to_download
+    # def check_if_downloaded(self, geo_data_files: List[GeoDataFile]) -> List[GeoDataFile]:
+    #     files_to_download: List[GeoDataFile] = []
+    #     for file in geo_data_files:
+    #         processed_loc = self.get_processed_loc(file)
+    #         if not os.path.exists(processed_loc):
+    #             files_to_download.append(file)
+    #         else:
+    #             logging.info(f'{processed_loc} exists, Skipping download of {file.key}...')
+    #             # check if file that's been processed is in self.processed_files
+    #             in_processed_files = False
+    #             for processed_file in self.processed_files:
+    #                 if (processed_file.processed_loc == processed_loc):
+    #                     in_processed_files = True
+    #             if not in_processed_files:
+    #                 logging.info(f'{processed_loc} exists, but was not in self.processed_files. adding...')
+    #                 file.processed_loc = processed_loc
+    #                 self.processed_files.append(file)
+    #     return files_to_download
 
     
     def get_download_path(self, file: GeoDataFile) -> str:
@@ -124,18 +128,6 @@ class GPMDataSource(DataSource):
             logging.error(f"Failed to download file: {response.status_code}")
         
             return None
-        
-    def update_data(self) -> List[str]:
-        recent_data_files = self.fetch_data_files()
-        files_to_download = self.check_if_downloaded(recent_data_files)
-        downloaded_files = self.download_files(files_to_download)
-        self.process_files(downloaded_files)
-        self.remove_downloaded_files(downloaded_files)
-        self.clean_up_processed_files()
-
-        return self.get_processed_locs()
-
-        
 
     def extract_datetime_from_path(self, path: str) -> datetime:
         # Define the regex pattern to match the datetime in the path
@@ -151,6 +143,7 @@ class GPMDataSource(DataSource):
             
             # Parse the combined string into a datetime object
             extracted_datetime = datetime.strptime(datetime_str, "%Y%m%d%H%M%S")
+            extracted_datetime = extracted_datetime.replace(tzinfo=timezone.utc)
             return extracted_datetime
         else:
             raise ValueError("No valid datetime found in the provided path.")

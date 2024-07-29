@@ -34,8 +34,9 @@ class DataSource(abc.ABC):
 
         filtered_geo_data_files: List[GeoDataFile] = []
         for geo_data_file in geo_data_files:
+
             if geo_data_file.datetime > cutoff_time:
-                filtered_geo_data_files.append()
+                filtered_geo_data_files.append(geo_data_file)
         
         return filtered_geo_data_files
 
@@ -83,6 +84,13 @@ class DataSource(abc.ABC):
             processed_locs.append(file.processed_loc)
         return processed_locs
     
+    def get_processed_locs_with_time(self) -> List[str]:
+        processed_locs = []
+        for file in self.processed_files:
+            processed_tuple = (file.processed_loc, file.datetime.isoformat())
+            processed_locs.append(processed_tuple)
+        return processed_locs
+    
     '''
     Returns files_to_download: List[GeoDataFile]
     '''
@@ -107,30 +115,46 @@ class DataSource(abc.ABC):
 
     def remove_downloaded_files(self, downloaded_files: List[GeoDataFile]):
         for file in downloaded_files:
-            file.remove_local_file()
-    
-    def update_data(self) -> List[str]:
-        recent_data_files = self.fetch_data_files()
-        filtered_recent_data_files = self.filter_files_by_time(recent_data_files)
-        files_to_download = self.check_if_downloaded(recent_data_files)
+            if file.local_path != '':
+                file.remove_local_file()
+
+    def update_data(self):
+        start = datetime.now()
+        
+        recent_files = self.fetch_data_files()
+        fetch_time = datetime.now()
+        logging.info(f'Fetch finished in: {fetch_time-start}')
+        filtered_recent_files = self.filter_files_by_time(recent_files)
+
+        files_to_download = self.check_if_downloaded(filtered_recent_files)
         downloaded_files = self.download_files(files_to_download)
+        download_time = datetime.now()
+        logging.info(f'Download finished in: {download_time-fetch_time}')
         self.process_files(downloaded_files)
+        process_time = datetime.now()
         self.remove_downloaded_files(downloaded_files)
+
+        logging.info(f'Full run finished in: {process_time-start}')
+        logging.info(f'Fetch finished in: {fetch_time-start}')
+        logging.info(f'Download finished in: {download_time-fetch_time}')
+        logging.info(f'Process finished in: {process_time-download_time}')
+    
         self.clean_up_processed_files()
 
-        return self.get_processed_locs()
+        return self.get_processed_locs_with_time()
     
     def clean_up_processed_files(self):
         logging.info('Cleaning up processed_files...')
         self.sort_processed_files(reverse=True)
         updated_processed_files: List[GeoDataFile] = []
-        time_cutoff = datetime.now() - self.time_delta
+        time_cutoff = datetime.now(timezone.utc) - self.time_delta
         for processed_file in self.processed_files:
             if processed_file.datetime > time_cutoff:
                 updated_processed_files.append(processed_file)
             else:
                 processed_file.remove_processed_loc()
-                processed_file.remove_local_file()
+                if processed_file.local_path != '':
+                    processed_file.remove_local_file()
 
         self.processed_files = updated_processed_files
         self.sort_processed_files()

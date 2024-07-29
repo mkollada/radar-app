@@ -1,33 +1,30 @@
 import logging
 import os
-import shutil
 from typing import List
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
-from classes import DataType
 from classes import GeoDataFile
 from data_source import DataSource
 from utils.data_to_tiles import process_zipped_grib2_to_tiles
+
 
 class MRMSDataSource(DataSource):
     def __init__(
             self, 
             raw_data_folder='./data/raw/mrms', 
             processed_data_folder='../radar-app/public/tiles/mrms',
-            n_files=4,
-            base_url='https://mrms.ncep.noaa.gov/data/2D/'
+            time_delta: timedelta = timedelta(hours=1),
         ):
-        super().__init__(raw_data_folder, processed_data_folder, base_url)
+        super().__init__(raw_data_folder, processed_data_folder, time_delta)
         self.processed_data_folder = processed_data_folder
         self.raw_data_folder = raw_data_folder
-        self.n_files = n_files
 
-        self.base_url = base_url
+        self.base_url = 'https://mrms.ncep.noaa.gov/data/2D/'
         self.variable_name = 'Reflectivity_0C'
-        self.variable_url = os.path.join(base_url, self.variable_name)
+        self.variable_url = os.path.join(self.base_url, self.variable_name)
         self.processed_variable_data_dir = os.path.join(processed_data_folder, self.variable_name)
         self.color_relief_file = './assets/color_reliefs/Reflectivity_0C_color_relief.txt'
         self.processed_files = []
@@ -59,8 +56,10 @@ class MRMSDataSource(DataSource):
         try:
             parts = name.split('_')
             date_part = parts[-1].split('.')[0]
-            file_datetime = datetime.strptime(date_part, '%Y%m%d-%H%M%S')
-            return file_datetime
+            extracted_datetime = datetime.strptime(date_part, '%Y%m%d-%H%M%S')
+            extracted_datetime = extracted_datetime.replace(tzinfo=timezone.utc)
+
+            return extracted_datetime
         except (IndexError, ValueError) as e:
             logging.error(f"Error parsing date from {name}: {e}")
             return datetime.min
@@ -92,9 +91,9 @@ class MRMSDataSource(DataSource):
                     logging.error(f"Error createing Geo Data File date from {href}: {e}")
 
         self.sort_processed_files()
-        recent_geo_data_files = geo_data_files[-self.n_files:]
+        # recent_geo_data_files = geo_data_files[-self.n_files:]
 
-        return recent_geo_data_files
+        return geo_data_files
 
     def download_file(self, geo_data_file: GeoDataFile) -> GeoDataFile | None:
         if not os.path.exists(self.processed_data_folder):

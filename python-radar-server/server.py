@@ -4,6 +4,7 @@ import os
 import logging
 import threading
 from datetime import timedelta
+from typing import Tuple, Dict
 
 from data_sources.mrms import MRMSDataSource
 from data_sources.nexrad import NexradDataSource
@@ -24,31 +25,38 @@ next_tiles_dir = os.path.join(next_app_public_dir, 'tiles')
 mrms_data_source = MRMSDataSource(
     raw_data_folder=os.path.join(local_data_folder, 'raw', 'mrms'),
     processed_data_folder=os.path.join(next_tiles_dir, 'mrms'),
-    n_files=20
+    time_delta=timedelta(hours=1)
 )
 # NEXRAD
-nexrad_data_source = NexradDataSource(
-    raw_data_folder='./data/raw/nexrad/',
-    processed_data_folder='../radar-app/public/nexrad',
-    time_delta=timedelta(minutes=10)
-)
+# nexrad_data_source = NexradDataSource(
+#     raw_data_folder='./data/raw/nexrad/',
+#     processed_data_folder='../radar-app/public/nexrad',
+#     time_delta=timedelta(minutes=10)
+# )
 
 # GPM
 gpm_data_source = GPMDataSource(
     raw_data_folder='./data/raw/gpm/',
     processed_data_folder='../radar-app/public/tiles/gpm/',
-    n_files=3
+    time_delta=timedelta(hours=7)
 )
 
 # Satellite
-sat_data_source = SatDataSource(
-    raw_data_folder='./data/raw/satellite/',
-    processed_data_folder='../radar-app/public/tiles/satellite',
-    n_files=6
-)
+# sat_data_source = SatDataSource(
+#     raw_data_folder='./data/raw/satellite/',
+#     processed_data_folder='../radar-app/public/tiles/satellite',
+#     time_delta=timedelta(hours=3)
+# )
 
 # Global lock for synchronizing all data updates
 global_update_lock = threading.Lock()
+
+def prep_data_source_result(result: Tuple[str, str]) -> Dict[str, str]:
+    radar_app_locs = {}
+    for loc, time in result:
+        radar_app_locs[time] = os.path.join(*loc.split('/')[4:])
+    return radar_app_locs
+
 
 @app.route('/')
 def index():
@@ -60,11 +68,8 @@ def updateGPMData():
     with global_update_lock:
         logging.info("Acquired lock for updating GPM data")
         try:
-            processed_locs = gpm_data_source.update_data()
-            radar_app_locs = []
-            for loc in processed_locs:
-                radar_app_loc = os.path.join(*loc.split('/')[4:])
-                radar_app_locs.append(radar_app_loc)
+            processed_locs_with_time = gpm_data_source.update_data()
+            radar_app_locs = prep_data_source_result(processed_locs_with_time)
             logging.info("Processed locations: %s", radar_app_locs)
             return jsonify({"directories": radar_app_locs}), 200
         except Exception as e:
@@ -79,11 +84,8 @@ def updateMRMSData():
     with global_update_lock:
         logging.info("Acquired lock for updating MRMS data")
         try:
-            processed_locs = mrms_data_source.update_data()
-            radar_app_locs = []
-            for loc in processed_locs:
-                radar_app_loc = os.path.join(*loc.split('/')[4:])
-                radar_app_locs.append(radar_app_loc)
+            processed_locs_with_time = mrms_data_source.update_data()
+            radar_app_locs = prep_data_source_result(processed_locs_with_time)
             logging.info("Processed locations: %s", radar_app_locs)
             return jsonify({"directories": radar_app_locs}), 200
         except Exception as e:

@@ -13,13 +13,11 @@ type UpdateDataResponse = {
 };
 
 const Home: React.FC = () => {
-  const [mapType, setMapType] = useState<'MRMS_Reflectivity_0C' | 'NEXRAD_reflectivity' | 'GPM_PrecipRate' | 'Satellite'
-  >('MRMS_Reflectivity_0C');
+  const [mapType, setMapType] = useState<'MRMS_Reflectivity_0C' | 'NEXRAD_reflectivity' | 'GPM_PrecipRate' | 'Satellite'>('MRMS_Reflectivity_0C');
   
-
-  const [gpmDirs, setGpmDirs] = useState<string[]>([])
-  const [mrmsDirs, setMrmsDirs] = useState<string[]>([])
-  const [satDirs, setSatDirs] = useState<string[]>([])
+  const [gpmDirs, setGpmDirs] = useState<Record<string, string>>({});
+  const [mrmsDirs, setMrmsDirs] = useState<Record<string, string>>({});
+  const [satDirs, setSatDirs] = useState<Record<string, string>>({});
 
   const updateGPMData = async () => {
     const response = await fetch(`/api/updateGPMData`);
@@ -29,11 +27,9 @@ const Home: React.FC = () => {
         setGpmDirs(data.directories);
       }
     } else {
-      console.error(
-        '/updateGPMData call failed'
-      )
+      console.error('/updateGPMData call failed');
     }
-  }
+  };
 
   const updateMRMSData = async () => {
     const response = await fetch(`/api/updateMRMSData`);
@@ -43,11 +39,9 @@ const Home: React.FC = () => {
         setMrmsDirs(data.directories);
       }
     } else {
-      console.error(
-        '/updateMRMSData call failed'
-      )
+      console.error('/updateMRMSData call failed');
     }
-  }
+  };
 
   const updateSatelliteData = async () => {
     const response = await fetch(`/api/updateSatelliteData`);
@@ -57,28 +51,26 @@ const Home: React.FC = () => {
         setSatDirs(data.directories);
       }
     } else {
-      console.error(
-        '/updateSatelliteData call failed'
-      )
+      console.error('/updateSatelliteData call failed');
     }
-  }
+  };
 
   useEffect(() => {
     updateGPMData();
     updateMRMSData();
 
-    const updateMRMSInterval = setInterval(() => {
-      updateMRMSData();
-    }, 120000); // 2 minutes
+    // const updateMRMSInterval = setInterval(() => {
+    //   updateMRMSData();
+    // }, 120000); // 2 minutes
 
-    const updateGPMInterval = setInterval(() => {
-      updateGPMData();
-    }, 1800000); // 30 minutes
+    // const updateGPMInterval = setInterval(() => {
+    //   updateGPMData();
+    // }, 1800000); // 30 minutes
 
-    return () => {
-      clearInterval(updateMRMSInterval);
-      clearInterval(updateGPMInterval);
-    };
+    // return () => {
+    //   clearInterval(updateMRMSInterval);
+    //   clearInterval(updateGPMInterval);
+    // };
   }, []);
 
   const gpmLegendColors = [
@@ -102,18 +94,16 @@ const Home: React.FC = () => {
     { value: 65.0, color: 'rgba(139, 0, 139, 1)' }      // Dark magenta for extreme rain or hail
   ];
   
-  
-
   const renderMap = () => {
     switch (mapType) {
       case 'MRMS_Reflectivity_0C':
-        return <USLoopingTileMap directories={mrmsDirs} interval={200} legendColors={mrmsLegendColors}/>;
+        return <USLoopingTileMap directories={mrmsDirs} interval={200} legendColors={mrmsLegendColors} />;
       case 'NEXRAD_reflectivity':
-        return <NexradMap />
+        return <NexradMap />;
       case 'GPM_PrecipRate':
-        return <GlobalLoopingTileMap directories={gpmDirs} interval={500} legendColors={gpmLegendColors}/>
+        return <GlobalLoopingTileMap directories={gpmDirs} interval={500} legendColors={gpmLegendColors} />;
       case 'Satellite':
-        return <GlobalLoopingTileMap directories={satDirs} interval={500} legendColors={mrmsLegendColors}/>
+        return <GlobalLoopingTileMap directories={satDirs} interval={250} legendColors={mrmsLegendColors} />;
       default:
         return null;
     }

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
 import styles from '../styles/PrecipitationMap.module.css';
-import {ColorLegend, LegendColor} from './ColorLegend';
+import { ColorLegend, LegendColor } from './ColorLegend';
 
 const MapContainer = dynamic(
   () => import('react-leaflet').then((mod) => mod.MapContainer),
@@ -14,30 +14,31 @@ const TileLayer = dynamic(
 );
 
 interface LoopingTileMapProps {
-  directories: string[];
+  directories: Record<string, string>;
   interval: number;
-  legendColors: LegendColor[]
+  legendColors: LegendColor[];
 }
 
 export const USLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, interval, legendColors }) => {
   const [currentDirectoryIndex, setCurrentDirectoryIndex] = useState(0);
+  const directoryEntries = Object.entries(directories);
 
   useEffect(() => {
-    if (directories.length > 0) {
+    if (directoryEntries.length > 0) {
       const timer = setInterval(() => {
-        setCurrentDirectoryIndex((prevIndex) => (prevIndex + 1) % directories.length);
+        setCurrentDirectoryIndex((prevIndex) => (prevIndex + 1) % directoryEntries.length);
       }, interval);
 
       return () => clearInterval(timer);
     }
-  }, [directories, interval]);
+  }, [directoryEntries, interval]);
 
   useEffect(() => {
     console.log('Current directory US:')
-    console.log(directories[currentDirectoryIndex])
-  }, [currentDirectoryIndex])
+    console.log(directoryEntries[currentDirectoryIndex]);
+  }, [currentDirectoryIndex, directoryEntries]);
 
-  if (directories.length === 0) {
+  if (directoryEntries.length === 0) {
     return <div>Loading...</div>;
   }
 
@@ -58,7 +59,7 @@ export const USLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, i
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"
         />
-        {directories.map((dir, index) => (
+        {directoryEntries.map(([key, dir], index) => (
           <TileLayer
             url={`/tiles/${dir}/{z}/{x}/{y}.png`}
             attribution="&copy; MRMS Data Contributors"
@@ -67,31 +68,33 @@ export const USLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, i
           />
         ))}
       </MapContainer>
+      <div className={styles.timeDisplay}>
+        Time: {directoryEntries[currentDirectoryIndex][0]}
+      </div>
     </div>
   );
 };
 
-
-
 export const GlobalLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, interval, legendColors }) => {
   const [currentDirectoryIndex, setCurrentDirectoryIndex] = useState(0);
+  const directoryEntries = Object.entries(directories);
 
   useEffect(() => {
-    if (directories.length > 0) {
+    if (directoryEntries.length > 0) {
       const timer = setInterval(() => {
-        setCurrentDirectoryIndex((prevIndex) => (prevIndex + 1) % directories.length);
+        setCurrentDirectoryIndex((prevIndex) => (prevIndex + 1) % directoryEntries.length);
       }, interval);
 
       return () => clearInterval(timer);
     }
-  }, [directories, interval]);
+  }, [directoryEntries, interval]);
 
   useEffect(() => {
     console.log('Current directory Global:')
-    console.log(directories[currentDirectoryIndex])
-  }, [currentDirectoryIndex])
+    console.log(directoryEntries[currentDirectoryIndex]);
+  }, [currentDirectoryIndex, directoryEntries]);
 
-  if (directories.length === 0) {
+  if (directoryEntries.length === 0) {
     return <div>Loading...</div>;
   }
 
@@ -112,7 +115,7 @@ export const GlobalLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directorie
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="&copy; OpenStreetMap contributors"
         />
-        {directories.map((dir, index) => (
+        {directoryEntries.map(([key, dir], index) => (
           <TileLayer
             url={`/tiles/${dir}/{z}/{x}/{y}.png`}
             attribution="&copy; MRMS Data Contributors"
@@ -121,6 +124,9 @@ export const GlobalLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directorie
           />
         ))}
       </MapContainer>
+      <div className={styles.timeDisplay}>
+        Time: {directoryEntries[currentDirectoryIndex][0]}
+      </div>
     </div>
   );
 };
