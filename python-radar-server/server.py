@@ -3,6 +3,7 @@ from flask_cors import CORS
 import os
 import logging
 import threading
+from datetime import timedelta
 
 from data_sources.mrms import MRMSDataSource
 from data_sources.nexrad import NexradDataSource
@@ -27,8 +28,9 @@ mrms_data_source = MRMSDataSource(
 )
 # NEXRAD
 nexrad_data_source = NexradDataSource(
-    raw_data_folder='./data/nexrad/raw/',
+    raw_data_folder='./data/raw/nexrad/',
     processed_data_folder='../radar-app/public/nexrad',
+    time_delta=timedelta(minutes=10)
 )
 
 # GPM

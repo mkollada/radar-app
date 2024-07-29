@@ -4,17 +4,40 @@ from tqdm import tqdm
 from classes import DataType, GeoDataFile
 from typing import List
 import logging
+from datetime import datetime, timezone, timedelta
 
 
 class DataSource(abc.ABC):
-    def __init__(self, raw_data_folder, processed_data_folder, base_url):
+    def __init__(
+            self, raw_data_folder: str, 
+            processed_data_folder:str , 
+            time_delta: timedelta
+        ):
         self.raw_data_folder = raw_data_folder
         self.processed_data_folder = processed_data_folder
-        self.base_url = base_url
+        self.time_delta = time_delta
         if not os.path.exists(raw_data_folder):
             os.makedirs(raw_data_folder)
         if not os.path.exists(processed_data_folder):
             os.makedirs(processed_data_folder)
+
+        self.processed_files: List[GeoDataFile] = []
+
+        # Configure logging
+        logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.info('DataSource initialized.')
+
+    def filter_files_by_time(self, geo_data_files: List[GeoDataFile]):
+        now = datetime.now(timezone.utc)
+        cutoff_time = now - self.time_delta
+
+        filtered_geo_data_files: List[GeoDataFile] = []
+        for geo_data_file in geo_data_files:
+            if geo_data_file.datetime > cutoff_time:
+                filtered_geo_data_files.append()
+        
+        return filtered_geo_data_files
 
     abc.abstractmethod
     def extract_datetime_from_name(self, name: str):
@@ -88,6 +111,7 @@ class DataSource(abc.ABC):
     
     def update_data(self) -> List[str]:
         recent_data_files = self.fetch_data_files()
+        filtered_recent_data_files = self.filter_files_by_time(recent_data_files)
         files_to_download = self.check_if_downloaded(recent_data_files)
         downloaded_files = self.download_files(files_to_download)
         self.process_files(downloaded_files)
@@ -99,12 +123,16 @@ class DataSource(abc.ABC):
     def clean_up_processed_files(self):
         logging.info('Cleaning up processed_files...')
         self.sort_processed_files(reverse=True)
-        files_to_remove = self.processed_files[self.n_files:]
-        if len(self.processed_files) > self.n_files:
-            self.processed_files = self.processed_files[:self.n_files]
-        for geo_data_file in files_to_remove:
-            geo_data_file.remove_processed_loc()
-        logging.info('processed_files cleaned.')
+        updated_processed_files: List[GeoDataFile] = []
+        time_cutoff = datetime.now() - self.time_delta
+        for processed_file in self.processed_files:
+            if processed_file.datetime > time_cutoff:
+                updated_processed_files.append(processed_file)
+            else:
+                processed_file.remove_processed_loc()
+                processed_file.remove_local_file()
+
+        self.processed_files = updated_processed_files
         self.sort_processed_files()
 
     def download_files(self, geo_data_files: List[GeoDataFile]) -> List[GeoDataFile]:

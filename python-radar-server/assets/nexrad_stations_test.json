@@ -1,0 +1,7 @@
+[
+    {"id": "KABR", "name": "Aberdeen, SD", "latitude": 45.455, "longitude": -98.413},
+    {"id": "KABX", "name": "Albuquerque, NM", "latitude": 35.149, "longitude": -106.823},
+    {"id": "KAKQ", "name": "Wakefield, VA", "latitude": 36.983, "longitude": -77.002},
+    {"id": "KAMA", "name": "Amarillo, TX", "latitude": 35.233, "longitude": -101.709},
+    {"id": "KAMX", "name": "Miami, FL", "latitude": 25.611, "longitude": -80.413}
+]
