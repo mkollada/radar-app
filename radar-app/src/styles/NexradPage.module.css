@@ -1,0 +1,29 @@
+/* NexradPage.module.css */
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .header {
+    margin: 10px;
+  }
+  
+  .mapContainer {
+    width: 100%;
+    height: calc(100vh - 50px);
+  }
+  
+  .button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .button:hover {
+    background-color: #0056b3;
+  }
+  
