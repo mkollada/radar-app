@@ -8,12 +8,10 @@ const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLaye
 const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
 const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
 
-const NexradMap = () => {
+const NexradMap = ({ onSelectSite }: { onSelectSite: (siteCode: string) => void }) => {
   const [leaflet, setLeaflet] = useState<any>(null);
   const [stations, setStations] = useState<any[]>([]);
-  const [selectedStation, setSelectedStation] = useState<null | string>(null);
-  const [overlayImage, setOverlayImage] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [tileDir, setTileDir] = useState<string | null>(null);
 
   useEffect(() => {
     // Ensure this code runs only on the client side
@@ -25,43 +23,38 @@ const NexradMap = () => {
           shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
         });
 
-        setLeaflet(L);
+        const customIcon = new L.Icon({
+          iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+          iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+          iconSize: [15, 24], // Set the size of the icon (smaller size)
+          iconAnchor: [7, 24], // Set the anchor point of the icon
+          popupAnchor: [1, -20], // Set the anchor point of the popup
+          shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+          shadowSize: [24, 24], // Set the size of the shadow
+        });
+
+        setLeaflet({ L, customIcon });
       });
 
-      // Fetch the JSON data
+      // Fetch the JSON data for stations
       fetch('/nexrad_stations.json')
         .then((response) => response.json())
         .then((data) => setStations(data))
         .catch((error) => console.error('Error fetching the NEXRAD stations:', error));
+
+      // Fetch the most recent MRMS tiles directory
+      fetch('/api/getMostRecentMRMS')
+        .then((response) => response.json())
+        .then((data) => setTileDir(data.tileDir))
+        .catch((error) => console.error('Error fetching the most recent MRMS tiles:', error));
     }
   }, []);
 
   const handleMarkerClick = (stationId: string) => {
-    setSelectedStation(stationId);
-    setLoading(true);
-    console.log(stationId);
-    fetch(`/api/updateNexradData?site_code=${stationId}&variable_name=reflectivity`)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-        const imageUrl = data.imageUrl; // Update this with the correct key from your response
-        console.log(imageUrl);
-        console.log('---------');
-        setOverlayImage('/nexrad/' + imageUrl);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error('Error fetching the update data:', error);
-        setLoading(false);
-      });
+    onSelectSite(stationId);
   };
 
-  const handleMapClick = () => {
-    setOverlayImage(null);
-    setSelectedStation(null);
-  };
-
-  if (!leaflet) {
+  if (!leaflet || !tileDir) {
     return <div>Loading map...</div>;
   }
 
@@ -71,15 +64,17 @@ const NexradMap = () => {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
+      <TileLayer
+        url={`${tileDir}/{z}/{x}/{y}.png`}
+        attribution='&copy; MRMS'
+      />
       {stations.map((station) => (
         <Marker
           key={station.id}
           position={[station.latitude, station.longitude]}
+          icon={leaflet.customIcon}
           eventHandlers={{
-            click: (e) => {
-              e.originalEvent.stopPropagation();
-              handleMarkerClick(station.id);
-            },
+            click: () => handleMarkerClick(station.id),
           }}
         >
           <Popup>
@@ -89,62 +84,6 @@ const NexradMap = () => {
           </Popup>
         </Marker>
       ))}
-      {selectedStation && (
-        <div className="overlay" onClick={() => setSelectedStation(null)}>
-          {loading ? (
-            <div className="loading">
-              <div className="spinner"></div> Loading...
-            </div>
-          ) : (
-            overlayImage && <img src={overlayImage} alt={selectedStation} className="overlay-image" />
-          )}
-        </div>
-      )}
-      <style jsx>{`
-        .overlay {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background-color: rgba(0, 0, 0, 0.5);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          z-index: 1000;
-        }
-
-        .overlay-image {
-          max-width: 100%;
-          max-height: 100%;
-        }
-
-        .loading {
-          color: white;
-          font-size: 1.5em;
-          display: flex;
-          align-items: center;
-        }
-
-        .spinner {
-          border: 4px solid rgba(255, 255, 255, 0.3);
-          border-top: 4px solid white;
-          border-radius: 50%;
-          width: 24px;
-          height: 24px;
-          animation: spin 1s linear infinite;
-          margin-right: 8px;
-        }
-
-        @keyframes spin {
-          0% {
-            transform: rotate(0deg);
-          }
-          100% {
-            transform: rotate(360deg);
-          }
-        }
-      `}</style>
     </MapContainer>
   );
 };

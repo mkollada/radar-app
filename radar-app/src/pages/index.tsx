@@ -2,15 +2,8 @@ import { useState, useEffect } from 'react';
 import styles from '../styles/Home.module.css'; // Importing the CSS module for styling
 
 import { GlobalLoopingTileMap, USLoopingTileMap } from '@/components/LoopingTileMap';
-import NexradMap from '@/components/NexradMap';
+import NexradPage from '@/components/NexradPage';
 
-type UpdateDataResponse = {
-  dataLocs: {
-    [dataSource: string]: {
-      [dataType: string]: string[];
-    };
-  };
-};
 
 const Home: React.FC = () => {
   const [mapType, setMapType] = useState<'MRMS_Reflectivity_0C' | 'NEXRAD_reflectivity' | 'GPM_PrecipRate' | 'Satellite'>('MRMS_Reflectivity_0C');
@@ -18,6 +11,7 @@ const Home: React.FC = () => {
   const [gpmDirs, setGpmDirs] = useState<Record<string, string>>({});
   const [mrmsDirs, setMrmsDirs] = useState<Record<string, string>>({});
   const [satDirs, setSatDirs] = useState<Record<string, string>>({});
+  const [nexradLoaded, setNexradLoaded] = useState(false)
 
   const updateGPMData = async () => {
     const response = await fetch(`/api/updateGPMData`);
@@ -28,6 +22,18 @@ const Home: React.FC = () => {
       }
     } else {
       console.error('/updateGPMData call failed');
+    }
+  };
+
+  const updateNexradData = async () => {
+    const response = await fetch(`/api/updateFullNexradData`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        setNexradLoaded(true);
+      }
+    } else {
+      console.error('/updateNexradData call failed');
     }
   };
 
@@ -56,8 +62,9 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
-    updateGPMData();
-    updateMRMSData();
+    updateNexradData()
+    // updateGPMData();
+    // updateMRMSData();
 
     // const updateMRMSInterval = setInterval(() => {
     //   updateMRMSData();
@@ -98,8 +105,8 @@ const Home: React.FC = () => {
     switch (mapType) {
       case 'MRMS_Reflectivity_0C':
         return <USLoopingTileMap directories={mrmsDirs} interval={200} legendColors={mrmsLegendColors} />;
-      // case 'NEXRAD_reflectivity':
-      //   return <NexradMap />;
+      case 'NEXRAD_reflectivity':
+        return <NexradPage />;
       case 'GPM_PrecipRate':
         return <GlobalLoopingTileMap directories={gpmDirs} interval={500} legendColors={gpmLegendColors} />;
       case 'Satellite':
@@ -112,9 +119,9 @@ const Home: React.FC = () => {
   return (
     <div className={styles.button_container}>
       <div>
-        <button className={styles.button} onClick={() => setMapType('MRMS_Reflectivity_0C')}>MRMS - Reflectivity_0C</button>
-        {/* <button className={styles.button} onClick={() => setMapType('NEXRAD_reflectivity')}>NEXRAD - Reflectivity</button> */}
-        <button className={styles.button} onClick={() => setMapType('GPM_PrecipRate')}>GPM - Global Precipitation</button>
+        <button className={styles.button} onClick={() => setMapType('MRMS_Reflectivity_0C')}>US Hi Res Precipitation</button>
+        <button className={styles.button} onClick={() => setMapType('NEXRAD_reflectivity')}>NEXRAD</button>
+        <button className={styles.button} onClick={() => setMapType('GPM_PrecipRate')}>Global Precipitation</button>
         <button className={styles.button} onClick={() => setMapType('Satellite')}>Satellite</button>
       </div>
       {renderMap()}
