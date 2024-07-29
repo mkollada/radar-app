@@ -29,7 +29,6 @@ class MRMSDataSource(DataSource):
         self.color_relief_file = './assets/color_reliefs/Reflectivity_0C_color_relief.txt'
         self.processed_files = []
         self.init_processed_files()
-        self.clean_up_processed_files()
 
     # Creates geo_data_files for all dirs in self.processed_data_folder
     def init_processed_files(self):
