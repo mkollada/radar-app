@@ -1,7 +1,7 @@
-import NexradMap from "@/components/NexradMap";
+import NexradPage from "@/components/NexradPage"
 
 const Nexrad: React.FC = () => {
-    return <NexradMap />
+    return <NexradPage />
 }
 
 export default Nexrad

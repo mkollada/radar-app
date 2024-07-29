@@ -98,8 +98,8 @@ const Home: React.FC = () => {
     switch (mapType) {
       case 'MRMS_Reflectivity_0C':
         return <USLoopingTileMap directories={mrmsDirs} interval={200} legendColors={mrmsLegendColors} />;
-      case 'NEXRAD_reflectivity':
-        return <NexradMap />;
+      // case 'NEXRAD_reflectivity':
+      //   return <NexradMap />;
       case 'GPM_PrecipRate':
         return <GlobalLoopingTileMap directories={gpmDirs} interval={500} legendColors={gpmLegendColors} />;
       case 'Satellite':
@@ -113,7 +113,7 @@ const Home: React.FC = () => {
     <div className={styles.button_container}>
       <div>
         <button className={styles.button} onClick={() => setMapType('MRMS_Reflectivity_0C')}>MRMS - Reflectivity_0C</button>
-        <button className={styles.button} onClick={() => setMapType('NEXRAD_reflectivity')}>NEXRAD - Reflectivity</button>
+        {/* <button className={styles.button} onClick={() => setMapType('NEXRAD_reflectivity')}>NEXRAD - Reflectivity</button> */}
         <button className={styles.button} onClick={() => setMapType('GPM_PrecipRate')}>GPM - Global Precipitation</button>
         <button className={styles.button} onClick={() => setMapType('Satellite')}>Satellite</button>
       </div>
