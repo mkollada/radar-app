@@ -255,8 +255,8 @@ def process_netcdf_to_tiles(
     base_temp_file_name = os.path.splitext(os.path.basename(netcdf_file))[0]
     output_tif = base_temp_file_name + '.tif'
     output_8bit_tif = base_temp_file_name + '_8bit.tif'
-    output_colored_tif = base_temp_file_name + '_3857.tif'
-    reprojected_tif = base_temp_file_name + '_colored.tif'
+    output_colored_tif = base_temp_file_name + '_colored.tif'
+    reprojected_tif = base_temp_file_name + '_3857.tif'
     
     
     data = read_netcdf(netcdf_file, variable_name)

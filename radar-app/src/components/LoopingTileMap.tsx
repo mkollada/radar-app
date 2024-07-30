@@ -17,10 +17,12 @@ interface LoopingTileMapProps {
   directories: Record<string, string>;
   interval: number;
   legendColors: LegendColor[];
+  maxBounds: [[number, number], [number, number]];
 }
 
-export const USLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, interval, legendColors }) => {
+export const USLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, interval, legendColors, maxBounds }) => {
   const [currentDirectoryIndex, setCurrentDirectoryIndex] = useState(0);
+  const [satelliteView, setSatelliteView] = useState(false);
   const directoryEntries = Object.entries(directories);
 
   useEffect(() => {
@@ -45,6 +47,9 @@ export const USLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, i
   return (
     <div className={styles.mapContainer}>
       <ColorLegend legendColors={legendColors} />
+      <button onClick={() => setSatelliteView(!satelliteView)}>
+        {satelliteView ? 'Switch to Default View' : 'Switch to Satellite View'}
+      </button>
       <MapContainer
         center={[37.8, -96.9]} // Center over the US
         zoom={4} // Appropriate zoom level for the US
@@ -52,13 +57,20 @@ export const USLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, i
         maxZoom={5}
         className={styles.map}
         worldCopyJump={true}
-        maxBounds={[[50, -125], [24, -66.9]]} // Set max bounds for the continental US
+        maxBounds={maxBounds} // Use the maxBounds prop
         maxBoundsViscosity={1.0} // Makes panning to edges smoother
       >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
-        />
+        {satelliteView ? (
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution="&copy; OpenStreetMap contributors"
+          />
+        ) : (
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            attribution="Tiles © Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community"
+          />
+        )}
         {directoryEntries.map(([key, dir], index) => (
           <TileLayer
             url={`/tiles/${dir}/{z}/{x}/{y}.png`}
@@ -75,8 +87,9 @@ export const USLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, i
   );
 };
 
-export const GlobalLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, interval, legendColors }) => {
+export const GlobalLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directories, interval, legendColors, maxBounds }) => {
   const [currentDirectoryIndex, setCurrentDirectoryIndex] = useState(0);
+  const [satelliteView, setSatelliteView] = useState(false);
   const directoryEntries = Object.entries(directories);
 
   useEffect(() => {
@@ -101,20 +114,30 @@ export const GlobalLoopingTileMap: React.FC<LoopingTileMapProps> = ({ directorie
   return (
     <div className={styles.mapContainer}>
       <ColorLegend legendColors={legendColors} />
+      <button onClick={() => setSatelliteView(!satelliteView)}>
+        {satelliteView ? 'Switch to Default View' : 'Switch to Satellite View'}
+      </button>
       <MapContainer
-        center={[0, 0]} // Center over the US
-        zoom={3} // Appropriate zoom level for the US
+        center={[0, 0]} // Center over the globe
+        zoom={3} // Appropriate zoom level for the globe
         minZoom={2}
         maxZoom={5}
         className={styles.map}
         worldCopyJump={true}
-        maxBounds={[[85, -180], [-85, 180]]} // Set max bounds to prevent wrapping
+        maxBounds={maxBounds} // Use the maxBounds prop
         maxBoundsViscosity={1.0} // Makes panning to edges smoother
       >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap contributors"
-        />
+        {satelliteView ? (
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution="&copy; OpenStreetMap contributors"
+          />
+        ) : (
+          <TileLayer
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+            attribution="Tiles © Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community"
+          />
+        )}
         {directoryEntries.map(([key, dir], index) => (
           <TileLayer
             url={`/tiles/${dir}/{z}/{x}/{y}.png`}

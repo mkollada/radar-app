@@ -38,14 +38,14 @@ nexrad_data_source = NexradDataSource(
 gpm_data_source = GPMDataSource(
     raw_data_folder='./data/raw/gpm/',
     processed_data_folder='../radar-app/public/tiles/gpm/',
-    time_delta=timedelta(hours=7)
+    time_delta=timedelta(hours=8)
 )
 
 # Satellite
 sat_data_source = SatDataSource(
     raw_data_folder='./data/raw/satellite/',
     processed_data_folder='../radar-app/public/tiles/satellite',
-    time_delta=timedelta(hours=1)
+    time_delta=timedelta(hours=5)
 )
 
 # Global lock for synchronizing all data updates

@@ -69,7 +69,9 @@ const Home: React.FC = () => {
     // }
 
     updateSatelliteData()
-
+    updateGPMData()
+    updateMRMSData()
+    // updateNexradData()
 
     // const updateMRMSInterval = setInterval(() => {
     //   updateMRMSData();
@@ -109,13 +111,13 @@ const Home: React.FC = () => {
   const renderMap = () => {
     switch (mapType) {
       case 'MRMS_Reflectivity_0C':
-        return <USLoopingTileMap directories={mrmsDirs} interval={200} legendColors={mrmsLegendColors} />;
+        return <USLoopingTileMap directories={mrmsDirs} interval={200} legendColors={mrmsLegendColors} maxBounds={[[50, -125], [24, -66.9]]}/>;
       case 'NEXRAD_reflectivity':
         return <NexradPage />;
       case 'GPM_PrecipRate':
-        return <GlobalLoopingTileMap directories={gpmDirs} interval={500} legendColors={gpmLegendColors} />;
+        return <GlobalLoopingTileMap directories={gpmDirs} interval={500} legendColors={gpmLegendColors} maxBounds={[[85, -180], [-85, 180]]}/>;
       case 'Satellite':
-        return <GlobalLoopingTileMap directories={satDirs} interval={250} legendColors={mrmsLegendColors} />;
+        return <GlobalLoopingTileMap directories={satDirs} interval={250} legendColors={mrmsLegendColors} maxBounds={[[72, -180], [-72, 180]]}/>;
       default:
         return null;
     }

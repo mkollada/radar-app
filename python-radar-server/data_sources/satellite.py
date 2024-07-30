@@ -18,7 +18,7 @@ class SatDataSource(DataSource):
         self.raw_data_folder = raw_data_folder
         self.processed_data_folder = processed_data_folder
         
-        self.variable_name = 'GMGSI_VIS'
+        self.variable_name = 'GMGSI_SW'
         self.s3_client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
         self.bucket = 'noaa-gmgsi-pds'
 

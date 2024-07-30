@@ -1,8 +1,8 @@
-# Precipitation Rate (mm/hr)    Red    Green  Blue   Alpha
-0.0                               0      0      0    0     # Transparent
-50.0                              0      0      0    25    # Slightly visible white
-75.0                              0      0      0    50    # More visible white
-100.0                             0      0      0    75    # Even more visible white
-150.0                             0      0      0    125   # Very visible white
-175.0                             0      0      0    175   # Almost fully visible white
-200.0                             0      0      0    255   # Fully visible white
+# Cloud cover                   Red    Green  Blue   Alpha
+0.0                             250    250    250    0     # Transparent
+50.0                            250    250    250    25    # Slightly visible white
+75.0                            250    250    250    50    # More visible white
+100.0                           250    250    250    75    # Even more visible white
+150.0                           250    250    250    125   # Very visible white
+175.0                           250    250    250    175   # Almost fully visible white
+200.0                           250    250    250    255   # Fully visible white
