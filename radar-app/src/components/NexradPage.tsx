@@ -15,9 +15,8 @@ const NexradPage: React.FC = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        {view === 'region' ? (
+        {view === 'region' && (
           <button className={styles.button} onClick={() => setView('map')}>Select Site</button>
-        ) : (<div></div>
         )}
       </div>
       <div className={styles.mapContainer}>

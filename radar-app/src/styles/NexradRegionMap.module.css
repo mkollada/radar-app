@@ -1,39 +1,38 @@
 /* NexradRegionMap.module.css */
 .container {
-    position: relative;
-    overflow: hidden;
-    align-self: center;
-    align-items: center;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .image {
-    width: 50%;
-    height: auto;
-    transition: transform 0.2s ease;
-  }
-  
-  .zoom-in {
-    transform: scale(1.5);
-  }
-  
-  .zoom-out {
-    transform: scale(1);
-  }
-  
-  .controls {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 1000;
-  }
-  
-  .button {
-    margin: 5px;
-    padding: 10px;
-    background-color: rgba(255, 255, 255, 0.8);
-    border: 1px solid #ccc;
-    cursor: pointer;
-  }
-  
+  position: relative;
+  overflow: hidden;
+  align-self: center;
+  align-items: center;
+  /* display: flex; */
+  flex-direction: column;
+}
+
+.image {
+  width: 100%;
+  height: auto;
+  transition: transform 0.2s ease;
+}
+
+.zoom-in {
+  transform: scale(1.5);
+}
+
+.zoom-out {
+  transform: scale(1);
+}
+
+.controls {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1000;
+}
+
+.button {
+  margin: 5px;
+  padding: 10px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid #ccc;
+  cursor: pointer;
+}

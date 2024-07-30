@@ -67,7 +67,6 @@ const Home: React.FC = () => {
     //   updateGPMData();
     //   updateMRMSData();
     // }
-
     updateSatelliteData()
     updateGPMData()
     updateMRMSData()
