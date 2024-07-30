@@ -42,11 +42,11 @@ gpm_data_source = GPMDataSource(
 )
 
 # Satellite
-# sat_data_source = SatDataSource(
-#     raw_data_folder='./data/raw/satellite/',
-#     processed_data_folder='../radar-app/public/tiles/satellite',
-#     time_delta=timedelta(hours=3)
-# )
+sat_data_source = SatDataSource(
+    raw_data_folder='./data/raw/satellite/',
+    processed_data_folder='../radar-app/public/tiles/satellite',
+    time_delta=timedelta(hours=1)
+)
 
 # Global lock for synchronizing all data updates
 global_update_lock = threading.Lock()
@@ -100,11 +100,8 @@ def updateSatelliteData():
     with global_update_lock:
         logging.info("Acquired lock for updating Satellite data")
         try:
-            processed_locs = sat_data_source.update_data()
-            radar_app_locs = []
-            for loc in processed_locs:
-                radar_app_loc = os.path.join(*loc.split('/')[4:])
-                radar_app_locs.append(radar_app_loc)
+            processed_locs_with_time = sat_data_source.update_data()
+            radar_app_locs = prep_data_source_result(processed_locs_with_time)
             logging.info("Processed locations: %s", radar_app_locs)
             return jsonify({"directories": radar_app_locs}), 200
         except Exception as e:

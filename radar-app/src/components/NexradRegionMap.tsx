@@ -51,11 +51,11 @@ const NexradRegionMap: React.FC<NexradRegionMapProps> = ({ site_code, interval }
 
   return (
     <div className={styles.container}>
-      <div className={styles.controls}>
+      {/* <div className={styles.controls}>
         <button className={styles.button} onClick={handleZoomToggle}>
           {zoomedIn ? 'Zoom Out' : 'Zoom In'}
         </button>
-      </div>
+      </div> */}
       <img
         src={images[currentImageIndex]}
         alt={`Image ${currentImageIndex}`}

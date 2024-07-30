@@ -62,9 +62,14 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
-    updateNexradData()
-    // updateGPMData();
-    // updateMRMSData();
+    // while(true){
+    //   updateNexradData()
+    //   updateGPMData();
+    //   updateMRMSData();
+    // }
+
+    updateSatelliteData()
+
 
     // const updateMRMSInterval = setInterval(() => {
     //   updateMRMSData();

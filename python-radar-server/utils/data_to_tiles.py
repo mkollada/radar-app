@@ -1,6 +1,6 @@
 import logging
 import rasterio
-from rasterio.transform import from_origin
+from rasterio.transform import from_origin, from_bounds
 import subprocess
 import os
 import xarray as xr
@@ -19,7 +19,7 @@ def read_netcdf(netcdf_file, variable_name):
         # Convert to xarray Dataset
         ds = xr.open_dataset(xr.backends.NetCDF4DataStore(nc_file))
 
-        if 'lon' in ds:
+        if ('lon' in ds) and ('lat' in ds):
             ds = ds.rename_vars({'lon':'longitude'})
 
         if 'lat' in ds:
@@ -33,6 +33,60 @@ def read_netcdf(netcdf_file, variable_name):
         logging.error(f'Error reading netcdf {netcdf_file}:', e)
         return False
     return data
+
+def preprocess_satellite_netcdf(data: xr.Dataset, output_tif: str):
+    try:
+        data = xr.Dataset(
+            {'data': (('latitude', 'longitude'), data.values)},
+            coords={'latitude': data.latitude.values.transpose()[0], 'longitude': data.longitude.values[0]},
+            attrs={'units': 'none'}
+        )['data']
+
+        # Extract variables
+        lat = data.latitude.values
+        lon = data.longitude.values
+
+        # Create a meshgrid for the latitude and longitude values
+        lon2d, lat2d = np.meshgrid(lon, lat)
+
+        # Define the bounds of the original data
+        lon_min, lon_max = lon.min(), lon.max()
+        lat_min, lat_max = lat.min(), lat.max()
+
+        # Define the target resolution and grid size
+        res = 0.02  # Adjust the resolution as needed
+        target_lon = np.arange(lon_min, lon_max, res)
+        target_lat = np.arange(lat_min, lat_max, res)
+        target_lon2d, target_lat2d = np.meshgrid(target_lon, target_lat)
+
+        # Interpolate data to the regular grid
+        data_regrid = data.interp(longitude=target_lon, latitude=target_lat, method='linear')
+
+        # Define the transformation for the GeoTIFF
+        transform = from_bounds(lon_min, lat_min, lon_max, lat_max, target_lon2d.shape[1], target_lat2d.shape[0])
+
+        # Write the reprojected data to a GeoTIFF
+        with rasterio.open(
+            output_tif, 'w',
+            driver='GTiff',
+            height=target_lat2d.shape[0],
+            width=target_lon2d.shape[1],
+            count=1,
+            dtype=data_regrid.dtype,
+            crs='+proj=latlong',
+            transform=transform,
+        ) as dst:
+            dst.write(data_regrid.values, 1)
+
+        logging.info("GeoTIFF file has been created successfully: %s", output_tif)
+
+        
+
+    except Exception as e:
+        logging.error('Error processing satellite netcdf:', e)
+        return False
+
+    return True
 
 def read_grib2(grib2_file, variable_name, type_of_level, filter_grib=True):
     print("Reading GRIB2 file...")
@@ -58,7 +112,7 @@ def clip_latitude(data):
             logging.error("Clipping resulted in an empty dataset.")
             return False
     except Exception as e:
-        logging.erro(f'Error clipping latitudes:', e)
+        logging.error(f'Error clipping latitudes:', e)
         return False
     return data
 
@@ -69,8 +123,8 @@ def convert_to_geotiff(data, output_tif):
             long0 = data.longitude[0][1]
             long1 = data.longitude[0][2]
         elif len(data.longitude.shape) == 1:
-            long0 = data.longitude[0]
-            long1 = data.longitude[1]
+            long0 = data.longitude[1]
+            long1 = data.longitude[2]
 
         long_val = np.abs(long1 - long0).values
 
@@ -86,10 +140,13 @@ def convert_to_geotiff(data, output_tif):
         transform = from_origin(data.longitude.min().values, data.latitude.max().values, 
                                 long_val, 
                                 lat_val)
+        if 'units' in data.attrs:
+            if data.units == 'K':
+                data.values = data.values - 273.15  # Example conversion if the data is in Kelvin
 
-        if data.units == 'K':
-            data.values = data.values - 273.15  # Example conversion if the data is in Kelvin
-
+        print(data.shape)
+        print('------')
+        
         with rasterio.open(
             output_tif, 'w', driver='GTiff',
             height=data.shape[0], width=data.shape[1],
@@ -183,13 +240,16 @@ def apply_color_relief(input_tif, color_relief_file, output_colored_tif):
     
     return True
 
+
+
 def process_netcdf_to_tiles(
         netcdf_file, 
         variable_name, 
         output_tiles, 
         color_relief_file, 
         target_crs='EPSG:3857',
-        remove=True
+        remove=True,
+        satellite=False
 ):
     
     base_temp_file_name = os.path.splitext(os.path.basename(netcdf_file))[0]
@@ -200,8 +260,14 @@ def process_netcdf_to_tiles(
     
     
     data = read_netcdf(netcdf_file, variable_name)
+    
     data = clip_latitude(data)
-    geotiff_success = convert_to_geotiff(data, output_tif)
+
+    if satellite:
+        geotiff_success = preprocess_satellite_netcdf(data, output_tif)
+    else:
+    
+        geotiff_success = convert_to_geotiff(data, output_tif)
 
     if geotiff_success:
         color_success = apply_color_relief(output_tif, color_relief_file, output_colored_tif)

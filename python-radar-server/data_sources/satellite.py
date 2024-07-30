@@ -11,19 +11,20 @@ from botocore.client import Config
 
 class SatDataSource(DataSource):
     def __init__(self, raw_data_folder, processed_data_folder,
-                 n_files=1):
+                 time_delta):
+        
+        super().__init__(raw_data_folder,processed_data_folder,time_delta)
         
         self.raw_data_folder = raw_data_folder
         self.processed_data_folder = processed_data_folder
         
         self.variable_name = 'GMGSI_VIS'
         self.s3_client = boto3.client('s3', config=Config(signature_version=UNSIGNED))
-        self.n_files = n_files
         self.bucket = 'noaa-gmgsi-pds'
 
-        self.color_relief_file = './assets/color_reliefs/PrecipRate_color_relief.txt'
+        self.time_delta = time_delta
 
-        
+        self.color_relief_file = './assets/color_reliefs/satellite_color_relief.txt'
 
         self.processed_variable_data_dir = os.path.join(
             self.processed_data_folder,
@@ -32,13 +33,14 @@ class SatDataSource(DataSource):
 
         self.processed_files: List[GeoDataFile] = []
         self.init_processed_files()
-        self.clean_up_processed_files()
 
     def extract_datetime_from_name(self, name: str):
         # Assuming the filename format is fixed: GLOBCOMPSIR_nc.YYYYMMDDHH
         try:
             datetime_str = name.split('_')[1].split('.')[1]  # Split and get the date part
             extracted_datetime = datetime.strptime(datetime_str, "%Y%m%d%H")
+            extracted_datetime = extracted_datetime.replace(tzinfo=timezone.utc)
+
             return extracted_datetime
         except (IndexError, ValueError) as e:
             print(f"Error parsing datetime from filename: {e}")
@@ -52,8 +54,7 @@ class SatDataSource(DataSource):
             objects = get_recent_sat_mosaic_files(
                 self.s3_client,
                 self.bucket, 
-                self.variable_name, 
-                n_files=self.n_files
+                self.variable_name,
             )
 
             for obj in objects:
@@ -107,6 +108,7 @@ class SatDataSource(DataSource):
                 'data',
                 processed_loc,
                 self.color_relief_file,
+                satellite=True
             )
             logging.info(f'{file.local_path} processed successfully to tiles.')
             file.processed_loc = processed_loc
@@ -120,7 +122,7 @@ class SatDataSource(DataSource):
         return file
     
 
-def get_recent_sat_mosaic_files(s3_client, bucket, variable_name, n_files=1, delta=timedelta(days=1)):
+def get_recent_sat_mosaic_files(s3_client, bucket, variable_name, delta=timedelta(days=1)):
     end_time = datetime.now(timezone.utc)
     start_time = end_time - delta
     
@@ -143,4 +145,4 @@ def get_recent_sat_mosaic_files(s3_client, bucket, variable_name, n_files=1, del
     sorted_objects = sorted(filtered_objects, key=lambda x: x['LastModified'], reverse=True)
 
     # Return the n most recent objects
-    return sorted_objects[:n_files]
+    return sorted_objects
