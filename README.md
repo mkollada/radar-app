@@ -4,7 +4,7 @@ The two directories separate the API and the Map component:
 
 ### `python-radar-server`
 
-This is the python API that downloads and processes
+This is the python API that downloads and processes the radar data
 
 ### `radap-app`
 
